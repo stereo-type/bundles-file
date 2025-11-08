@@ -1,0 +1,149 @@
+{# Dropzone Widget #}
+<div id="dropzone-{{ field_id }}" class="slcorp-file-uploader dropzone" data-upload-url="{{ upload_url }}"
+     data-field-name="{{ field_name }}">
+    <div class="dz-message">
+        <p>Перетащите файлы сюда или нажмите для выбора</p>
+    </div>
+</div>
+
+{# Скрытое поле для хранения ID файла #}
+<input type="hidden" id="{{ field_id }}" name="{{ field_name }}" value="{{ value }}"/>
+
+{# Подключение Dropzone библиотеки #}
+<link href="https://cdn.jsdelivr.net/npm/dropzone@6.0.0-beta.2/dist/dropzone.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
+
+<style>
+    /* Масштабирование превью изображений в Dropzone */
+    #dropzone-{{ field_id }} .dz-image {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    #dropzone-{{ field_id }} .dz-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* Масштабировать с сохранением пропорций */
+        background: #f8f9fa;
+    }
+
+    /* Можно использовать object-fit: cover для заполнения всей области */
+    /* #dropzone-
+    {{ field_id }}
+     .dz-image img {
+            object-fit: cover;
+        } */
+</style>
+
+<script>
+    (function () {
+        'use strict';
+
+        // Отключаем автодискавери Dropzone
+        if (typeof Dropzone !== 'undefined') {
+            Dropzone.autoDiscover = false;
+        }
+
+        var dropzone = new Dropzone('#dropzone-{{ field_id }}', {
+            url: '{{ upload_url }}',
+            paramName: 'file',
+            maxFiles: 1,
+            autoProcessQueue: true, // Автоматически загружать файлы
+            thumbnailWidth: 200,  // Ширина превью
+            thumbnailHeight: 200, // Высота превью
+            thumbnailMethod: 'contain', // 'contain' - сохранить пропорции, 'crop' - обрезать
+            {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}
+            acceptedFiles: '{{ form.vars.attr['data-allowed-extensions'] }}',
+            {% endif %}
+            maxFilesize: {{ (form.vars.attr['data-max-size']|default(5242880) / 1048576)|round(2) }},
+            addedfile: function (file) {
+                console.log('Dropzone: файл добавлен', file.name);
+            },
+            sending: function (file, xhr, formData) {
+                console.log('Dropzone: начало загрузки', file.name);
+
+                // Добавляем параметры в FormData вручную (в Dropzone 6 params не всегда работают)
+                formData.append('component', '{{ component }}');
+                formData.append('filearea', '{{ filearea }}');
+                formData.append('itemid', {{ itemid }});
+                formData.append('contextid', {{ contextid }});
+                {% if userid is not null %}
+                formData.append('userid', {{ userid }});
+                {% endif %}
+
+                console.log('Dropzone: FormData params добавлены:', {
+                    component: '{{ component }}',
+                    filearea: '{{ filearea }}',
+                    itemid: {{ itemid }},
+                    contextid: {{ contextid }},
+                    userid: {{ userid|default('null') }}
+                });
+            },
+            init: function () {
+                var thisDropzone = this;
+                {% if file_data %}
+                console.log('Dropzone: есть существующий файл', {{ file_data|json_encode|raw }});
+
+                // Добавляем существующий файл как превью
+                var mockFile = {
+                    name: '{{ file_data.filename|escape('js') }}',
+                    size: {{ file_data.filesize }},
+                    type: '{{ file_data.mimetype|default('application/octet-stream')|escape('js') }}',
+                    status: 'success',
+                    accepted: true
+                };
+
+                // Пробуем displayExistingFile (если есть в Dropzone)
+                if (typeof thisDropzone.displayExistingFile === 'function') {
+                    thisDropzone.displayExistingFile(mockFile, '{{ file_data.download_url }}');
+                    console.log('Dropzone: превью добавлено через displayExistingFile');
+                } else {
+                    // Альтернативный способ для Dropzone 6
+                    thisDropzone.emit('addedfile', mockFile);
+                    {% if file_data.mimetype and file_data.mimetype starts with 'image/' %}
+                    thisDropzone.emit('thumbnail', mockFile, '{{ file_data.download_url }}');
+                    {% endif %}
+                    thisDropzone.emit('complete', mockFile);
+
+                    // Добавляем CSS класс успешной загрузки
+                    if (mockFile.previewElement) {
+                        mockFile.previewElement.classList.add('dz-success');
+                        mockFile.previewElement.classList.add('dz-complete');
+                    }
+                    console.log('Dropzone: превью добавлено через emit события');
+                }
+
+                // Обновляем счетчик файлов
+                thisDropzone.files.push(mockFile);
+                {% else %}
+                console.log('Dropzone: нет существующего файла для превью');
+                {% endif %}
+            },
+            success: function (file, response) {
+                console.log('Dropzone: успешная загрузка', response);
+                // Сохраняем ID файла в скрытое поле
+                if (response && response.id) {
+                    var hiddenField = document.getElementById('{{ field_id }}');
+                    hiddenField.value = response.id;
+                    console.log('Dropzone: ID файла сохранен в поле', hiddenField.name, '=', response.id);
+                } else {
+                    console.error('Dropzone: response не содержит ID', response);
+                }
+            },
+            error: function (file, message, xhr) {
+                console.error('Dropzone: ошибка загрузки файла', message, xhr);
+            },
+            complete: function (file) {
+                console.log('Dropzone: завершение обработки файла', file.name, 'status:', file.status);
+            },
+            removedfile: function (file) {
+                // Очищаем скрытое поле при удалении файла
+                document.getElementById('{{ field_id }}').value = '';
+                if (file.previewElement) {
+                    file.previewElement.remove();
+                }
+            }
+        });
+    })();
+</script>
+

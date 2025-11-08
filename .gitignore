@@ -9,7 +9,7 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
-
+./composer.lock
 ###> phpunit/phpunit ###
 /phpunit.xml
 .phpunit.result.cache
@@ -28,12 +28,3 @@
 ###> phpstan/phpstan ###
 phpstan.neon
 ###< phpstan/phpstan ###
-
-###> lexik/jwt-authentication-bundle ###
-/config/jwt/*.pem
-###< lexik/jwt-authentication-bundle ###
-
-###> symfony/asset-mapper ###
-/public/assets/
-/assets/vendor/
-###< symfony/asset-mapper ###

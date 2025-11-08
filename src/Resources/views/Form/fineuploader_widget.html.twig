@@ -1,0 +1,63 @@
+{# FineUploader Widget #}
+<div id="fine-uploader-{{ field_id }}" class="slcorp-file-uploader" data-upload-url="{{ upload_url }}"
+     data-field-name="{{ field_name }}">
+    {% if file_data %}
+        <div class="qq-uploader-existing-file">
+            <div class="qq-upload-list-selector qq-upload-list" aria-live="polite" aria-relevant="additions removals">
+                <div class="qq-upload-success" qq-file-id="0">
+                    <span class="qq-upload-file-selector qq-upload-file">{{ file_data.filename }}</span>
+                    <span
+                        class="qq-upload-size-selector qq-upload-size">{{ (file_data.filesize / 1024)|round(2) }} KB</span>
+                    <a class="qq-upload-cancel-selector" href="{{ file_data.download_url }}" target="_blank">Скачать</a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <noscript>
+            <p>Пожалуйста, включите JavaScript для загрузки файлов.</p>
+        </noscript>
+    {% endif %}
+</div>
+
+{# Скрытое поле для хранения ID файла #}
+<input type="hidden" id="{{ field_id }}" name="{{ field_name }}" value="{{ value }}"/>
+
+{# Подключение FineUploader библиотеки #}
+<link href="https://cdn.jsdelivr.net/npm/fine-uploader@5.16.2/fine-uploader/fine-uploader.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fine-uploader@5.16.2/fine-uploader/fine-uploader.min.js"></script>
+
+<script>
+    (function () {
+        'use strict';
+
+        var uploader = new qq.FineUploader({
+            element: document.getElementById('fine-uploader-{{ field_id }}'),
+            request: {
+                endpoint: '{{ upload_url }}',
+                params: {
+                    component: '{{ component }}',
+                    filearea: '{{ filearea }}',
+                    itemid: {{ itemid }},
+                    contextid: {{ contextid }}{% if userid is not null %},
+                    userid: {{ userid }}{% endif %}
+                }
+            },
+            callbacks: {
+                onComplete: function (id, name, response) {
+                    if (response.success) {
+                        // Сохраняем ID файла в скрытое поле
+                        document.getElementById('{{ field_id }}').value = response.uuid || response.id || '';
+                    }
+                },
+                onError: function (id, name, errorReason) {
+                    console.error('Ошибка загрузки файла:', errorReason);
+                }
+            },
+            validation: {
+                allowedExtensions: {{ form.vars.attr['data-allowed-extensions']|default('[]')|raw }},
+                sizeLimit: {{ form.vars.attr['data-max-size']|default(5242880) }}
+            }
+        });
+    })();
+</script>
+

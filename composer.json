@@ -1,79 +1,85 @@
 {
-  "name": "slcorp/file-bundle",
-  "version": "1.0.0",
-  "type": "symfony-bundle",
-  "minimum-stability": "dev",
-  "stability": "stable",
-  "description": "A clean architecture File bundle for Symfony.",
-  "keywords": [
-    "symfony",
-    "file",
-    "bundle",
-    "clean architecture"
-  ],
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Zhalayletdinov Vyacheslav",
-      "email": "evil_tut@mail.ru"
-    }
-  ],
-  "require": {
-    "php": ">=8.4",
-    "symfony/framework-bundle": "^7.3",
-    "symfony/runtime": "^7.3",
-    "symfony/yaml": "^7.3",
-    "symfony/dotenv": "^7.3",
-    "symfony/flex": "^2.9"
-  },
-  "require-dev": {
-    "roave/security-advisories": "dev-latest",
-    "symfony/phpunit-bridge": "^6.0",
-    "phpstan/phpstan": "^2.1",
-    "friendsofphp/php-cs-fixer": "^3.89",
-    "phpunit/phpunit": "^12.4",
-    "symfony/maker-bundle": "^1.61",
-    "phpstan/phpstan-doctrine": "^2.0",
-    "phpstan/phpstan-symfony": "^2.0",
-    "phpstan/extension-installer": "^1.4",
-    "phpstan/phpstan-phpunit": "^2.0",
-    "symfony/browser-kit": "^7.1",
-    "symfony/css-selector": "^7.1"
-  },
-  "autoload": {
-    "psr-4": {
-      "Slcorp\\FileBundle\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Slcorp\\FileBundle\\Tests\\": "tests/"
-    }
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-main": "1.x-dev",
-      "stable": "master"
+    "name": "slcorp/file-bundle",
+    "version": "1.0.0",
+    "type": "symfony-bundle",
+    "minimum-stability": "dev",
+    "stability": "stable",
+    "description": "A clean architecture File bundle for Symfony.",
+    "keywords": [
+        "symfony",
+        "file",
+        "bundle",
+        "clean architecture"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Zhalayletdinov Vyacheslav",
+            "email": "evil_tut@mail.ru"
+        }
+    ],
+    "require": {
+        "php": ">=8.4",
+        "symfony/framework-bundle": "^7.3",
+        "symfony/runtime": "^7.3",
+        "symfony/yaml": "^7.3",
+        "symfony/dotenv": "^7.3",
+        "symfony/flex": "^2.9",
+        "symfony/form": "^7.3",
+        "doctrine/orm": "^3.5",
+        "doctrine/doctrine-bundle": "^3.0",
+        "vich/uploader-bundle": "^2.8",
+        "sonata-project/media-bundle": "^4.19"
     },
-    "symfony": {
-      "allow-contrib": true,
-      "recipe": "config/recipes"
+    "require-dev": {
+        "roave/security-advisories": "dev-latest",
+        "symfony/phpunit-bridge": "^6.0",
+        "phpstan/phpstan": "^2.1",
+        "friendsofphp/php-cs-fixer": "^3.89",
+        "phpunit/phpunit": "^12.4",
+        "symfony/maker-bundle": "^1.61",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "symfony/browser-kit": "^7.1",
+        "symfony/css-selector": "^7.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Slcorp\\FileBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Slcorp\\FileBundle\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev",
+            "stable": "master"
+        },
+        "symfony": {
+            "allow-contrib": true,
+            "recipe": "config/recipes"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "cs-fix": "php-cs-fixer fix",
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+        },
+        "fix": "php vendor/bin/php-cs-fixer fix",
+        "stan": "php vendor/bin/phpstan analyse"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/runtime": true,
+            "phpstan/extension-installer": true,
+            "symfony/flex": true
+        }
     }
-  },
-  "scripts": {
-    "test": "phpunit",
-    "cs-fix": "php-cs-fixer fix",
-    "auto-scripts": {
-      "cache:clear": "symfony-cmd",
-      "assets:install %PUBLIC_DIR%": "symfony-cmd"
-    }
-  },
-  "config": {
-    "allow-plugins": {
-      "symfony/runtime": true,
-      "phpstan/extension-installer": true,
-      "symfony/flex": true
-    }
-  }
 }
-

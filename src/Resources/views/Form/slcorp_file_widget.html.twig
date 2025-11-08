@@ -1,0 +1,50 @@
+{% block slcorp_file_widget %}
+    {# Получаем переменные из атрибутов формы (установлены через setAttribute в buildForm) #}
+    {% set ui_library = form.vars.attr.ui_library|default('fineuploader') %}
+    {% set upload_url = path('slcorp_file_upload', {ui_library: ui_library}) %}
+    {% set field_id = form.vars.id %}
+    {% set field_name = form.vars.full_name %}
+    {% set component = form.vars.attr.component|default('default') %}
+    {% set filearea = form.vars.attr.filearea|default('default') %}
+    {% set itemid = form.vars.attr.itemid|default(0) %}
+    {% set contextid = form.vars.attr.contextid|default(1) %}
+    {% set userid = form.vars.attr.userid|default(null) %}
+    {% set value = form.vars.value|default('') %}
+    {% set file_data = form.vars.file_data|default(null) %}
+    {% if file_data and file_data.id %}
+        {% set file_data = file_data|merge({'download_url': url('slcorp_file_download', {id: file_data.id})}) %}
+    {% endif %}
+
+    {% set widget_params = {
+        'upload_url': upload_url,
+        'field_id': field_id,
+        'field_name': field_name,
+        'component': component,
+        'filearea': filearea,
+        'itemid': itemid,
+        'contextid': contextid,
+        'userid': userid,
+        'value': value,
+        'file_data': file_data,
+        'form': form
+    } %}
+
+    {# Подключаем нужную UI библиотеку #}
+    {% if ui_library == 'fineuploader' %}
+        {% include '@SlcorpFileBundle/Form/fineuploader_widget.html.twig' with widget_params %}
+    {% elseif ui_library == 'dropzone' %}
+        {% include '@SlcorpFileBundle/Form/dropzone_widget.html.twig' with widget_params %}
+    {% elseif ui_library == 'jquery_file_upload' %}
+        {% include '@SlcorpFileBundle/Form/jquery_file_upload_widget.html.twig' with widget_params %}
+    {% elseif ui_library == 'plupload' %}
+        {% include '@SlcorpFileBundle/Form/plupload_widget.html.twig' with widget_params %}
+    {% elseif ui_library == 'uploadify' %}
+        {% include '@SlcorpFileBundle/Form/uploadify_widget.html.twig' with widget_params %}
+    {% elseif ui_library == 'bluimp' %}
+        {% include '@SlcorpFileBundle/Form/bluimp_widget.html.twig' with widget_params %}
+    {% else %}
+        {# Fallback на стандартный file input #}
+        {{ block('form_widget_simple') }}
+    {% endif %}
+{% endblock %}
+

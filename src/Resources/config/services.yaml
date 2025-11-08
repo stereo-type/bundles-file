@@ -5,5 +5,63 @@ services:
 
   Slcorp\FileBundle\:
     resource: '../../*'
-    exclude: '../../{DependencyInjection,Resources,Tests,Kernel.php}'
+    exclude: '../../{Infrastructure,Resources,Tests,SlcorpFileBundle.php,Application/EventListener/ExampleFileUploadListener.php}'
+
+  Slcorp\FileBundle\Application\Form\Type\UniversalFileType:
+      tags:
+          - { name: form.type }
+
+    # Twig расширение для работы с файлами
+  Slcorp\FileBundle\UI\Twig\FileUploadExtension:
+      tags:
+          - { name: twig.extension }
+
+    # Контроллеры для загрузки файлов
+  Slcorp\FileBundle\UI\Http\Controller\FineUploaderController:
+      arguments:
+          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
+          $entityManager: '@doctrine.orm.entity_manager'
+
+  Slcorp\FileBundle\UI\Http\Controller\DropzoneController:
+      arguments:
+          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
+          $entityManager: '@doctrine.orm.entity_manager'
+
+  Slcorp\FileBundle\UI\Http\Controller\JQueryFileUploadController:
+      arguments:
+          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
+          $entityManager: '@doctrine.orm.entity_manager'
+
+  Slcorp\FileBundle\UI\Http\Controller\PluploadController:
+      arguments:
+          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
+          $entityManager: '@doctrine.orm.entity_manager'
+
+  Slcorp\FileBundle\UI\Http\Controller\UploadifyController:
+      arguments:
+          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
+          $entityManager: '@doctrine.orm.entity_manager'
+
+  Slcorp\FileBundle\UI\Http\Controller\BluimpController:
+      arguments:
+          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
+          $entityManager: '@doctrine.orm.entity_manager'
+
+    # ServiceLocator для контроллеров
+  slcorp_file.upload_controllers_locator:
+      class: Symfony\Component\DependencyInjection\ServiceLocator
+      arguments:
+          -   'Slcorp\FileBundle\UI\Http\Controller\FineUploaderController': '@Slcorp\FileBundle\UI\Http\Controller\FineUploaderController'
+              'Slcorp\FileBundle\UI\Http\Controller\DropzoneController': '@Slcorp\FileBundle\UI\Http\Controller\DropzoneController'
+              'Slcorp\FileBundle\UI\Http\Controller\JQueryFileUploadController': '@Slcorp\FileBundle\UI\Http\Controller\JQueryFileUploadController'
+              'Slcorp\FileBundle\UI\Http\Controller\PluploadController': '@Slcorp\FileBundle\UI\Http\Controller\PluploadController'
+              'Slcorp\FileBundle\UI\Http\Controller\UploadifyController': '@Slcorp\FileBundle\UI\Http\Controller\UploadifyController'
+              'Slcorp\FileBundle\UI\Http\Controller\BluimpController': '@Slcorp\FileBundle\UI\Http\Controller\BluimpController'
+      tags:
+          - { name: container.service_locator }
+
+    # Фабрика контроллеров
+  Slcorp\FileBundle\UI\Http\Controller\ControllerFactory:
+      arguments:
+          $controllers: '@slcorp_file.upload_controllers_locator'
 
