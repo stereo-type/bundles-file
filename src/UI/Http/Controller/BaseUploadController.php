@@ -21,7 +21,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * @copyright  2024 Zhalayletdinov Vyacheslav evil_tut@mail.ru
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class BaseUploadController extends AbstractController
+abstract class BaseUploadController extends AbstractController implements UploaderControllerInterface
 {
     public function __construct(
         protected readonly FileService $fileService,
@@ -33,7 +33,7 @@ abstract class BaseUploadController extends AbstractController
      * Обрабатывает загрузку файла.
      * Должен быть реализован в каждом UI-специфичном контроллере.
      */
-    abstract public function upload(Request $request): Response;
+
 
     /**
      * Обрабатывает удаление файла.
@@ -46,6 +46,7 @@ abstract class BaseUploadController extends AbstractController
     )]
     public function delete(Request $request, int $fileId): JsonResponse
     {
+        dd('delete BaseUploadController');
         $file = $this->entityManager->getRepository(File::class)->find($fileId);
 
         if (!$file instanceof File) {

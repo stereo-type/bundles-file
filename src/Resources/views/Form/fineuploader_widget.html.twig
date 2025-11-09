@@ -55,7 +55,8 @@
             },
             validation: {
                 allowedExtensions: {{ form.vars.attr['data-allowed-extensions']|default('[]')|raw }},
-                sizeLimit: {{ form.vars.attr['data-max-size']|default(5242880) }}
+                sizeLimit: {{ form.vars.attr['data-max-size']|default(5242880) }},
+                itemLimit: {{ form.vars.attr['data-max-files']|default(1) }}
             }
         });
     })();

@@ -51,10 +51,12 @@ class SlcorpFileExtension extends Extension implements PrependExtensionInterface
         $validationConfig = $config['validation'] ?? [];
         $allowedMimeTypes = $validationConfig['mime_types'] ?? [];
         $maxSize = $this->parseMaxSize($validationConfig['max_size'] ?? null);
+        $maxFiles = $validationConfig['max_files'] ?? 1;
 
         // Сохраняем настройки валидации как параметры для использования в формах
         $container->setParameter('slcorp_file.validation.mime_types', $allowedMimeTypes);
         $container->setParameter('slcorp_file.validation.max_size', $validationConfig['max_size'] ?? null);
+        $container->setParameter('slcorp_file.validation.max_files', $maxFiles);
 
         // Регистрируем валидатор файлов
         $validatorDefinition = new Definition(FileValidator::class, [

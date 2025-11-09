@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Slcorp\FileBundle\UI\Http\Controller;
 
+use Slcorp\FileBundle\Application\Enum\FileUILibrary;
 use Slcorp\FileBundle\Domain\Entity\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -70,5 +71,10 @@ class FineUploaderController extends BaseUploadController
         }
 
         return null;
+    }
+
+    public function library(): FileUILibrary
+    {
+        return FileUILibrary::FINE_UPLOADER;
     }
 }

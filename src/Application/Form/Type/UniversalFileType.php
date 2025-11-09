@@ -13,6 +13,7 @@ use Slcorp\FileBundle\Application\Service\FileService;
 use Slcorp\FileBundle\Domain\Entity\File;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -118,6 +119,11 @@ class UniversalFileType extends AbstractType
                 // Парсим размер в байты
                 $view->vars['attr']['data-max-size'] = $this->parseMaxSizeToBytes($maxSize);
             }
+        }
+
+        if (!isset($view->vars['attr']['data-max-files'])) {
+            $maxFiles = $this->parameterBag->get('slcorp_file.validation.max_files') ?? 1;
+            $view->vars['attr']['data-max-files'] = (int)$maxFiles;
         }
 
         // Если есть значение (ID файла), загружаем информацию о файле для превью

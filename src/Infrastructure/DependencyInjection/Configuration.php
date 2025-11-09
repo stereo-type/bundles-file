@@ -49,6 +49,11 @@ class Configuration implements ConfigurationInterface
             ->info('Максимальный размер файла в байтах (null = без ограничений). Можно использовать суффиксы: K, M, G (например: 2M)')
             ->defaultNull()
             ->end()
+            ->integerNode('max_files')
+            ->info('Максимальное количество файлов, которое можно загрузить')
+            ->defaultValue(1)
+            ->min(1)
+            ->end()
             ->end()
             ->end()
             ->end();
