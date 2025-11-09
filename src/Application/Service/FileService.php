@@ -9,13 +9,14 @@ use Slcorp\FileBundle\Application\Event\PostPersistEvent;
 use Slcorp\FileBundle\Application\Event\PostUploadEvent;
 use Slcorp\FileBundle\Application\Event\PreUploadEvent;
 use Slcorp\FileBundle\Domain\Entity\File;
+use Slcorp\RoleModelBundle\Domain\Repository\UserRepositoryInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
- * @copyright  2024 Zhalayletdinov Vyacheslav evil_tut@mail.ru
+ * @copyright  2025 Zhalayletdinov Vyacheslav evil_tut@mail.ru
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 readonly class FileService
@@ -25,6 +26,7 @@ readonly class FileService
         private Filesystem $filesystem,
         private EventDispatcherInterface $eventDispatcher,
         private EntityManagerInterface $entityManager,
+        private UserRepositoryInterface $userRepository,
     ) {
     }
 
@@ -36,6 +38,8 @@ readonly class FileService
         int $contextid = 1,
         ?int $userid = null,
     ): File {
+        $user = $userid ? $this->userRepository->find($userid) : null;
+
         // Диспетчеризуем событие PreUploadEvent для валидации
         $preUploadEvent = new PreUploadEvent(
             $uploadedFile,
@@ -84,8 +88,10 @@ readonly class FileService
         $file->setItemid($itemid);
         // Сохраняем путь к директории относительно storage_path (для совместимости с Moodle)
         // filepath должен быть типа /a1/b2/c3/, где a1/b2/c3 - поддиректории из хеша
-        $fileDir = dirname($filePath);
-        $file->setFilepath('/' . str_replace('\\', '/', $fileDir) . '/');
+        // TODO придумать что то с папками  надо будет
+//        $fileDir = dirname($filePath);
+//        $file->setFilepath('/' . str_replace('\\', '/', $fileDir) . '/');
+        $file->setFilepath('/');
         $file->setFilename($uploadedFile->getClientOriginalName());
         $file->setUserid($userid);
         $file->setFilesize($uploadedFile->getSize());
@@ -94,6 +100,7 @@ readonly class FileService
         $file->setTimecreated(time());
         $file->setTimemodified(time());
         $file->setSortorder(0);
+        $file->setAuthor($user?->getFullName());
 
         // Диспетчеризуем событие PostUploadEvent (после загрузки файла, но до сохранения в БД)
         $postUploadEvent = new PostUploadEvent($uploadedFile, $file, $fullPath);
@@ -108,6 +115,92 @@ readonly class FileService
         $this->eventDispatcher->dispatch($postPersistEvent, PostPersistEvent::NAME);
 
         return $file;
+    }
+
+    /**
+     * Перемещает файл из draft area в permanent area (как в Moodle).
+     *
+     * @param int $draftItemId Уникальный ID draft area (itemid в draft)
+     * @param string $component Компонент назначения
+     * @param string $filearea Область файла назначения
+     * @param int $itemid ID элемента назначения
+     * @param int $contextid ID контекста
+     * @return File|null Перемещенный файл или null если не найден
+     */
+    public function moveFromDraft(
+        int $draftItemId,
+        string $component,
+        string $filearea,
+        int $itemid,
+        int $contextid
+    ): ?File {
+        // Находим файл в draft area:
+        // - component = тот же (для идентификации)
+        // - filearea = 'draft'
+        // - itemid = draftItemId
+        $file = $this->entityManager->getRepository(File::class)->findOneBy([
+            'component' => $component,
+            'filearea'  => 'draft',
+            'itemid'    => $draftItemId,
+        ]);
+
+        if (!$file instanceof File) {
+            return null;
+        }
+
+        // Перемещаем в permanent area
+        $file->setFilearea($filearea); // draft → avatar (например)
+        $file->setItemid($itemid); // draftItemId → user_id
+        $file->setContextid($contextid);
+        $file->setTimemodified(time());
+
+        $this->entityManager->persist($file);
+        $this->entityManager->flush();
+
+        return $file;
+    }
+
+    /**
+     * Копирует файл из permanent area в draft area (для редактирования).
+     * Используется когда открывается форма редактирования с уже загруженным файлом.
+     *
+     * @param int $fileId ID существующего файла
+     * @param int $draftItemId Новый draft item ID
+     * @return File|null Скопированный файл в draft или null если не найден
+     */
+    public function copyToDraft(int $fileId, int $draftItemId): ?File
+    {
+        // Находим оригинальный файл
+        $originalFile = $this->entityManager->getRepository(File::class)->find($fileId);
+
+        if (!$originalFile instanceof File) {
+            return null;
+        }
+
+        // Создаем копию в draft area
+        $draftFile = new File();
+        $draftFile->setContenthash($originalFile->getContenthash());
+        $draftFile->setPathnamehash($originalFile->getPathnamehash());
+        $draftFile->setContextid($originalFile->getContextid());
+        $draftFile->setComponent($originalFile->getComponent());
+        $draftFile->setFilearea('draft'); // DRAFT!
+        $draftFile->setItemid($draftItemId); // Новый draft ID
+        $draftFile->setFilepath($originalFile->getFilepath());
+        $draftFile->setFilename($originalFile->getFilename());
+        $draftFile->setUserid($originalFile->getUserid());
+        $draftFile->setFilesize($originalFile->getFilesize());
+        $draftFile->setMimetype($originalFile->getMimetype());
+        $draftFile->setStatus($originalFile->getStatus());
+        $draftFile->setTimecreated(time());
+        $draftFile->setTimemodified(time());
+        $draftFile->setSortorder($originalFile->getSortorder());
+        $draftFile->setAuthor($originalFile->getAuthor());
+        $draftFile->setReferencefileid($originalFile->getId()); // Ссылка на оригинал
+
+        $this->entityManager->persist($draftFile);
+        $this->entityManager->flush();
+
+        return $draftFile;
     }
 
     /**

@@ -88,18 +88,17 @@
                 thisDropzone.emit('complete', mockFile);
 
                 thisDropzone.files.push(mockFile);
-                {% else %}
                 {% endif %}
             },
             success: function (file, response) {
                 console.log('Dropzone: успешная загрузка', response);
-                // Сохраняем ID файла в скрытое поле
-                if (response && response.id) {
+                // Сохраняем draftitemid в скрытое поле (для draft area механизма)
+                if (response && response.draftitemid) {
                     var hiddenField = document.getElementById('{{ field_id }}');
-                    hiddenField.value = response.id;
-                    console.log('Dropzone: ID файла сохранен в поле', hiddenField.name, '=', response.id);
+                    hiddenField.value = response.draftitemid;
+                    console.log('Dropzone: draftitemid сохранен в поле', hiddenField.name, '=', response.draftitemid);
                 } else {
-                    console.error('Dropzone: response не содержит ID', response);
+                    console.error('Dropzone: response не содержит draftitemid', response);
                 }
             },
             // error: function (file, message, xhr) {

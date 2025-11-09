@@ -34,7 +34,6 @@ abstract class BaseUploadController extends AbstractController implements Upload
      * Должен быть реализован в каждом UI-специфичном контроллере.
      */
 
-
     /**
      * Обрабатывает удаление файла.
      */
@@ -76,17 +75,34 @@ abstract class BaseUploadController extends AbstractController implements Upload
 
     /**
      * Обрабатывает загруженный файл через FileService.
+     * AJAX загрузка ВСЕГДА сохраняет в draft area (filearea='draft').
      */
     protected function handleUploadedFile(UploadedFile $uploadedFile, array $params): File
     {
+        // Генерируем уникальный draft item ID (как в Moodle)
+        $draftItemId = $this->generateDraftItemId();
+
+        // Сохраняем в draft area:
+        // - component остается как есть (для идентификации источника)
+        // - filearea = 'draft' (специальная область для черновиков)
+        // - itemid = уникальный draft ID (это и есть draftitemid!)
         return $this->fileService->createFileFromUploaded(
             $uploadedFile,
             component: $params['component'],
-            filearea: $params['filearea'],
-            itemid: $params['itemid'],
+            filearea: 'draft', // DRAFT AREA!
+            itemid: $draftItemId, // Уникальный ID draft'а
             contextid: $params['contextid'],
             userid: $params['userid']
         );
+    }
+
+    /**
+     * Генерирует уникальный ID для draft area.
+     */
+    protected function generateDraftItemId(): int
+    {
+        // Используем timestamp + random для уникальности
+        return (int)(time() . rand(1000, 9999));
     }
 
     /**

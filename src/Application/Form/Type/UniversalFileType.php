@@ -13,7 +13,6 @@ use Slcorp\FileBundle\Application\Service\FileService;
 use Slcorp\FileBundle\Domain\Entity\File;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -126,18 +125,24 @@ class UniversalFileType extends AbstractType
             $view->vars['attr']['data-max-files'] = (int)$maxFiles;
         }
 
-        // Если есть значение (ID файла), загружаем информацию о файле для превью
+        // Если есть значение (draft itemid), загружаем информацию о файле для превью
         $fileData = null;
         if (!empty($view->vars['value'])) {
-            $fileId = is_numeric($view->vars['value']) ? (int)$view->vars['value'] : null;
-            if ($fileId) {
-                $file = $this->entityManager->getRepository(File::class)->find($fileId);
+            $draftItemId = is_numeric($view->vars['value']) ? (int)$view->vars['value'] : null;
+            if ($draftItemId) {
+                // Ищем файл в draft area по itemid (это и есть draft itemid)
+                $file = $this->entityManager->getRepository(File::class)->findOneBy([
+                    'component' => $config->getAttribute('component'),
+                    'filearea'  => 'draft',
+                    'itemid'    => $draftItemId,
+                ]);
+
                 if ($file instanceof File) {
                     $fileData = [
-                        'id'           => $file->getId(),
-                        'filename'     => $file->getFilename(),
-                        'filesize'     => $file->getFilesize(),
-                        'mimetype'     => $file->getMimetype(),
+                        'id'       => $file->getId(),
+                        'filename' => $file->getFilename(),
+                        'filesize' => $file->getFilesize(),
+                        'mimetype' => $file->getMimetype(),
                         'download_url' => null, // Будет сгенерирован в Twig
                     ];
                 }
@@ -160,9 +165,9 @@ class UniversalFileType extends AbstractType
         }
 
         // Парсим строку с суффиксом
-        $maxSize = trim($maxSize);
-        $unit = strtoupper(substr($maxSize, -1));
-        $value = (int)substr($maxSize, 0, -1);
+        $maxSize = mb_trim($maxSize);
+        $unit = mb_strtoupper(mb_substr($maxSize, -1));
+        $value = (int)mb_substr($maxSize, 0, -1);
 
         return match ($unit) {
             'K' => $value * 1024,
@@ -176,15 +181,15 @@ class UniversalFileType extends AbstractType
     {
         $uiLibraryDefault = $this->parameterBag->get('slcorp_file.ui_library') ?? 'fineuploader';
         $resolver->setDefaults([
-            'required'   => false,
-            'mapped'     => true, // По умолчанию привязано к модели
-            'adapter'    => null, // Можно переопределить глобальный адаптер для конкретного поля (FileAdapter enum)
+            'required'  => false,
+            'mapped'    => true, // По умолчанию привязано к модели
+            'adapter'   => null, // Можно переопределить глобальный адаптер для конкретного поля (FileAdapter enum)
             'ui_library' => $uiLibraryDefault, // UI библиотека для загрузки файлов (FileUILibrary enum или строка)
-            'component'  => null, // Компонент для сохранения файла (обязательно, если mapped = true)
-            'filearea'   => null, // Область файла (обязательно, если mapped = true)
-            'itemid'     => 0, // ID элемента
-            'contextid'  => 1, // ID контекста
-            'userid'     => null, // ID пользователя (опционально)
+            'component' => null, // Компонент для сохранения файла (обязательно, если mapped = true)
+            'filearea'  => null, // Область файла (обязательно, если mapped = true)
+            'itemid'    => 0, // ID элемента
+            'contextid' => 1, // ID контекста
+            'userid'    => null, // ID пользователя (опционально)
         ]);
 
         $resolver->setAllowedTypes('adapter', ['null', FileAdapter::class, 'string']);

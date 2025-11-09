@@ -8,10 +8,10 @@ declare(strict_types=1);
 
 return [
     'Slcorp\FileBundle' => [
-        'type'      => 'attribute',
+        'type'   => 'attribute',
         'is_bundle' => false,
-        'dir'       => '%kernel.project_dir%/src/Bundles/FileBundle/src/Domain/Entity',
-        'prefix'    => 'Slcorp\FileBundle\Domain\Entity',
-        'alias'     => 'Slcorp\FileBundle',
+        'dir'    => '%kernel.project_dir%/src/Bundles/FileBundle/src/Domain/Entity',
+        'prefix' => 'Slcorp\FileBundle\Domain\Entity',
+        'alias'  => 'Slcorp\FileBundle',
     ],
 ];

@@ -52,7 +52,7 @@ class DownloadController extends AbstractController
         $contenthash = $file->getContenthash();
 
         // Полный путь: storage_path + filepath + contenthash
-        $fullPath = rtrim($storagePath, '/') . $filePath . $contenthash;
+        $fullPath = mb_rtrim($storagePath, '/') . $filePath . $contenthash;
 
         if (!file_exists($fullPath)) {
             throw $this->createNotFoundException('Physical file not found');

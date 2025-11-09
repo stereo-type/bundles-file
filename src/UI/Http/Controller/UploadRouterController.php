@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Slcorp\FileBundle\UI\Http\Controller;
 
-use http\Exception\RuntimeException;
 use Slcorp\FileBundle\Application\Enum\FileUILibrary;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;

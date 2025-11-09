@@ -45,8 +45,9 @@
             callbacks: {
                 onComplete: function (id, name, response) {
                     if (response.success) {
-                        // Сохраняем ID файла в скрытое поле
-                        document.getElementById('{{ field_id }}').value = response.uuid || response.id || '';
+                        // Сохраняем draftitemid в скрытое поле (для draft area механизма)
+                        document.getElementById('{{ field_id }}').value = response.draftitemid || '';
+                        console.log('FineUploader: draftitemid сохранен =', response.draftitemid);
                     }
                 },
                 onError: function (id, name, errorReason) {

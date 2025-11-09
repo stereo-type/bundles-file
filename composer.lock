@@ -2174,12 +2174,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/cache.git",
-                "reference": "22e86168f3d57f07acfeadaedda80fb08aaf01cb"
+                "reference": "3d5ed27bf4133b86ffde853fc09dae991d439a84"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/cache/zipball/22e86168f3d57f07acfeadaedda80fb08aaf01cb",
-                "reference": "22e86168f3d57f07acfeadaedda80fb08aaf01cb",
+                "url": "https://api.github.com/repos/symfony/cache/zipball/3d5ed27bf4133b86ffde853fc09dae991d439a84",
+                "reference": "3d5ed27bf4133b86ffde853fc09dae991d439a84",
                 "shasum": ""
             },
             "require": {
@@ -2192,7 +2192,7 @@
             },
             "conflict": {
                 "doctrine/dbal": "<4.3",
-                "ext-redis": "<6.2",
+                "ext-redis": "<6.1",
                 "ext-relay": "<0.12.1"
             },
             "provide": {
@@ -2266,7 +2266,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-11-05T14:36:47+00:00"
+            "time": "2025-11-08T16:30:39+00:00"
         },
         {
             "name": "symfony/cache-contracts",
@@ -6305,12 +6305,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/type-info.git",
-                "reference": "26d15c8b28f4a8022ea2f7f256ee259338036a2b"
+                "reference": "9de828eae6aeb33806f8f2fec161a8f8e79338d0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/type-info/zipball/26d15c8b28f4a8022ea2f7f256ee259338036a2b",
-                "reference": "26d15c8b28f4a8022ea2f7f256ee259338036a2b",
+                "url": "https://api.github.com/repos/symfony/type-info/zipball/9de828eae6aeb33806f8f2fec161a8f8e79338d0",
+                "reference": "9de828eae6aeb33806f8f2fec161a8f8e79338d0",
                 "shasum": ""
             },
             "require": {
@@ -6379,7 +6379,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-10-27T14:17:12+00:00"
+            "time": "2025-11-08T16:30:39+00:00"
         },
         {
             "name": "symfony/validator",
@@ -6387,12 +6387,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/validator.git",
-                "reference": "865f7d1e6a23877ff77c9b722a40ae6306421ae8"
+                "reference": "20febdebdcd36078944cad22f34d5cca01667e83"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/validator/zipball/865f7d1e6a23877ff77c9b722a40ae6306421ae8",
-                "reference": "865f7d1e6a23877ff77c9b722a40ae6306421ae8",
+                "url": "https://api.github.com/repos/symfony/validator/zipball/20febdebdcd36078944cad22f34d5cca01667e83",
+                "reference": "20febdebdcd36078944cad22f34d5cca01667e83",
                 "shasum": ""
             },
             "require": {
@@ -6483,7 +6483,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-10-30T13:59:38+00:00"
+            "time": "2025-11-08T16:30:20+00:00"
         },
         {
             "name": "symfony/var-dumper",
@@ -7777,8 +7777,8 @@
             "version": "2.1.x-dev",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/8f9490e80eb6689381e654985b75d865829f0d50",
-                "reference": "8f9490e80eb6689381e654985b75d865829f0d50",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/81d40b557936fc4650b3260b394ad6e9a7b5d82c",
+                "reference": "81d40b557936fc4650b3260b394ad6e9a7b5d82c",
                 "shasum": ""
             },
             "require": {
@@ -7824,7 +7824,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-11-08T10:11:35+00:00"
+            "time": "2025-11-09T19:58:21+00:00"
         },
         {
             "name": "phpstan/phpstan-doctrine",
@@ -8032,12 +8032,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "0373bbbc2ed66164aa96cf8085c30f68beba2117"
+                "reference": "37047b5f0e98b31dccb9b7e7241e4f66ebfcd358"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/0373bbbc2ed66164aa96cf8085c30f68beba2117",
-                "reference": "0373bbbc2ed66164aa96cf8085c30f68beba2117",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/37047b5f0e98b31dccb9b7e7241e4f66ebfcd358",
+                "reference": "37047b5f0e98b31dccb9b7e7241e4f66ebfcd358",
                 "shasum": ""
             },
             "require": {
@@ -8114,7 +8114,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-11-08T12:26:25+00:00"
+            "time": "2025-11-08T16:53:07+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -8419,12 +8419,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "d45ae7d6d6871c9bb6f2185be01f7a4ad90ba1d4"
+                "reference": "c69b853cd4c27ac9cf6b7f902153fb905b5a1256"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/d45ae7d6d6871c9bb6f2185be01f7a4ad90ba1d4",
-                "reference": "d45ae7d6d6871c9bb6f2185be01f7a4ad90ba1d4",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/c69b853cd4c27ac9cf6b7f902153fb905b5a1256",
+                "reference": "c69b853cd4c27ac9cf6b7f902153fb905b5a1256",
                 "shasum": ""
             },
             "require": {
@@ -8516,7 +8516,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-11-06T13:14:21+00:00"
+            "time": "2025-11-08T12:34:30+00:00"
         },
         {
             "name": "react/cache",
