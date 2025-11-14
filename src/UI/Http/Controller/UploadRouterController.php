@@ -17,11 +17,11 @@ use ValueError;
  * @copyright  2024 Zhalayletdinov Vyacheslav evil_tut@mail.ru
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class UploadRouterController
+readonly class UploadRouterController
 {
     public function __construct(
-        private readonly ControllerFactory $controllerFactory,
-        private readonly ParameterBagInterface $parameterBag,
+        private ControllerFactory $controllerFactory,
+        private ParameterBagInterface $parameterBag,
     ) {
     }
 
@@ -31,8 +31,8 @@ class UploadRouterController
     #[Route(
         path: '/file/upload/{ui_library}',
         name: 'slcorp_file_upload',
-        defaults: ['ui_library' => 'fineuploader'],
         requirements: ['ui_library' => 'fineuploader|dropzone|jquery_file_upload|plupload|uploadify|bluimp'],
+        defaults: ['ui_library' => 'fineuploader'],
         methods: ['POST']
     )]
     public function upload(Request $request, string $ui_library = 'fineuploader'): Response
@@ -44,11 +44,12 @@ class UploadRouterController
 
         // Если все еще не указана, берем из глобального конфига
         if ($ui_library === 'fineuploader') {
+            /**@phpstan-ignore-next-line */
             $ui_library = $this->parameterBag->get('slcorp_file.ui_library') ?? FileUILibrary::FINE_UPLOADER->value;
         }
 
         try {
-            $library = FileUILibrary::from($ui_library);
+            $library = FileUILibrary::from((string)$ui_library);
         } catch (ValueError) {
             // Если библиотека не найдена, используем значение по умолчанию
             $library = FileUILibrary::FINE_UPLOADER;

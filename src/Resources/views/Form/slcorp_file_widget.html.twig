@@ -10,9 +10,12 @@
     {% set contextid = form.vars.attr.contextid|default(1) %}
     {% set userid = form.vars.attr.userid|default(null) %}
     {% set value = form.vars.value|default('') %}
-    {% set file_data = form.vars.file_data|default(null) %}
-    {% if file_data and file_data.id %}
-        {% set file_data = file_data|merge({'download_url': url('slcorp_file_download', {id: file_data.id})}) %}
+    {% set file_data = form.vars.file_data|default([]) %}
+    {# Добавляем download_url для каждого файла в массиве #}
+    {% if file_data is iterable %}
+        {% set file_data = file_data|map(file => file|merge({
+            'download_url': file.id ? url('slcorp_file_download', {id: file.id}) : null
+        })) %}
     {% endif %}
 
     {% set widget_params = {

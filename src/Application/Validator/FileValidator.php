@@ -73,6 +73,6 @@ readonly class FileValidator implements EventSubscriberInterface
         $pow = min($pow, count($units) - 1);
         $bytes /= (1024 ** $pow);
 
-        return round($bytes, 2) . ' ' . $units[$pow];
+        return round($bytes, 2) . ' ' . $units[(int)$pow];
     }
 }

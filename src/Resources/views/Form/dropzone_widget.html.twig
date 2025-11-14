@@ -6,8 +6,9 @@
     </div>
 </div>
 
-{# Скрытое поле для хранения ID файла #}
-<input type="hidden" id="{{ field_id }}" name="{{ field_name }}" value="{{ value }}"/>
+{# Скрытое поле для хранения массива draft itemid (JSON) - всегда массив #}
+<input type="hidden" id="{{ field_id }}" name="{{ field_name }}"
+       value="{% if file_data %}{{ file_data|map(f => f.draftitemid)|json_encode|raw }}{% else %}{{ value|default('[]') }}{% endif %}"/>
 
 {# Подключение Dropzone библиотеки #}
 <link href="https://cdn.jsdelivr.net/npm/dropzone@6.0.0-beta.2/dist/dropzone.css" rel="stylesheet">
@@ -71,32 +72,80 @@
             },
             init: function () {
                 var thisDropzone = this;
-                {% if file_data %}
+                var fileData = {{ file_data|json_encode|raw }};
 
-                var mockFile = {
-                    name: '{{ file_data.filename|escape('js') }}',
-                    size: {{ file_data.filesize }},
-                    type: '{{ file_data.mimetype|default('application/octet-stream')|escape('js') }}',
-                    status: 'success',
-                    accepted: true
-                };
+                // Добавляем существующие файлы
+                if (fileData && Array.isArray(fileData) && fileData.length > 0) {
+                    console.log('Dropzone: загрузка существующих файлов', fileData);
 
-                thisDropzone.emit('addedfile', mockFile);
-                {% if file_data.mimetype and file_data.mimetype starts with 'image/' %}
-                thisDropzone.emit('thumbnail', mockFile, '{{ file_data.download_url }}');
-                {% endif %}
-                thisDropzone.emit('complete', mockFile);
+                    fileData.forEach(function (file) {
+                        var mockFile = {
+                            name: file.filename,
+                            size: file.filesize,
+                            type: file.mimetype || 'application/octet-stream',
+                            status: 'success',
+                            accepted: true,
+                            draftitemid: file.draftitemid // Сохраняем для удаления
+                        };
 
-                thisDropzone.files.push(mockFile);
-                {% endif %}
+                        thisDropzone.emit('addedfile', mockFile);
+                        if (file.mimetype && file.mimetype.startsWith('image/')) {
+                            thisDropzone.emit('thumbnail', mockFile, file.download_url || '');
+                        }
+                        thisDropzone.emit('complete', mockFile);
+                        thisDropzone.files.push(mockFile);
+                    });
+                } else {
+                    console.log('Dropzone: нет существующих файлов');
+                }
+
+                // Нормализуем скрытое поле - всегда должен быть массив (JSON)
+                var hiddenField = document.getElementById('{{ field_id }}');
+                var currentValue = hiddenField.value || '[]';
+
+                try {
+                    var parsed = JSON.parse(currentValue);
+                    if (!Array.isArray(parsed)) {
+                        // Если не массив - преобразуем в массив
+                        hiddenField.value = parsed ? JSON.stringify([parsed]) : '[]';
+                    } else {
+                        // Уже массив - оставляем как есть
+                        hiddenField.value = JSON.stringify(parsed);
+                    }
+                } catch (e) {
+                    // Если не JSON - пытаемся преобразовать строку в массив
+                    if (currentValue && currentValue !== '[]') {
+                        hiddenField.value = JSON.stringify([currentValue]);
+                    } else {
+                        hiddenField.value = '[]';
+                    }
+                }
             },
             success: function (file, response) {
                 console.log('Dropzone: успешная загрузка', response);
-                // Сохраняем draftitemid в скрытое поле (для draft area механизма)
+                // Добавляем draftitemid в массив в скрытом поле (всегда массив)
                 if (response && response.draftitemid) {
                     var hiddenField = document.getElementById('{{ field_id }}');
-                    hiddenField.value = response.draftitemid;
-                    console.log('Dropzone: draftitemid сохранен в поле', hiddenField.name, '=', response.draftitemid);
+                    var currentValue = hiddenField.value || '[]';
+                    var draftItemIds = [];
+
+                    try {
+                        draftItemIds = JSON.parse(currentValue);
+                        if (!Array.isArray(draftItemIds)) {
+                            draftItemIds = [];
+                        }
+                    } catch (e) {
+                        draftItemIds = [];
+                    }
+
+                    // Добавляем новый draftitemid
+                    if (!draftItemIds.includes(response.draftitemid)) {
+                        draftItemIds.push(response.draftitemid);
+                        file.draftitemid = response.draftitemid; // Сохраняем для удаления
+                    }
+
+                    hiddenField.value = JSON.stringify(draftItemIds);
+                    console.log('Dropzone: draftitemid добавлен в массив', draftItemIds);
                 } else {
                     console.error('Dropzone: response не содержит draftitemid', response);
                 }
@@ -117,8 +166,29 @@
 
         dropzone.on('removedfile', function (file) {
             console.log('Dropzone: файл удален', file.name);
-            // Очищаем скрытое поле при удалении файла
-            document.getElementById('{{ field_id }}').value = '';
+            // Удаляем draftitemid из массива в скрытом поле (всегда массив)
+            var hiddenField = document.getElementById('{{ field_id }}');
+            var currentValue = hiddenField.value || '[]';
+            var draftItemIds = [];
+
+            try {
+                draftItemIds = JSON.parse(currentValue);
+                if (!Array.isArray(draftItemIds)) {
+                    draftItemIds = [];
+                }
+            } catch (e) {
+                draftItemIds = [];
+            }
+
+            // Удаляем draftitemid этого файла
+            if (file.draftitemid) {
+                draftItemIds = draftItemIds.filter(function (id) {
+                    return id !== file.draftitemid;
+                });
+            }
+
+            hiddenField.value = JSON.stringify(draftItemIds);
+            console.log('Dropzone: draftitemid удален из массива', draftItemIds);
         });
     })();
 </script>

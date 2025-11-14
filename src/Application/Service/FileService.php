@@ -9,6 +9,7 @@ use Slcorp\FileBundle\Application\Event\PostPersistEvent;
 use Slcorp\FileBundle\Application\Event\PostUploadEvent;
 use Slcorp\FileBundle\Application\Event\PreUploadEvent;
 use Slcorp\FileBundle\Domain\Entity\File;
+use Slcorp\FileBundle\Domain\Entity\FileRepositoryInterface;
 use Slcorp\RoleModelBundle\Domain\Repository\UserRepositoryInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -27,6 +28,7 @@ readonly class FileService
         private EventDispatcherInterface $eventDispatcher,
         private EntityManagerInterface $entityManager,
         private UserRepositoryInterface $userRepository,
+        private FileRepositoryInterface $fileRepository,
     ) {
     }
 
@@ -53,7 +55,7 @@ readonly class FileService
 
         // Вычисляем хеши
         $content = file_get_contents($uploadedFile->getPathname());
-        $contenthash = sha1($content);
+        $contenthash = sha1($content ?: '');
 
         $pathname = $uploadedFile->getClientOriginalName();
         $pathnamehash = sha1($pathname);
@@ -63,7 +65,7 @@ readonly class FileService
 
         // Создаем директорию, если её нет
         if (!$this->filesystem->exists($storagePath)) {
-            $this->filesystem->mkdir($storagePath, 0755, true);
+            $this->filesystem->mkdir($storagePath, 0755);
         }
 
         $filePath = $this->getFilePathFromHash($contenthash);
@@ -72,7 +74,7 @@ readonly class FileService
         // Создаем директории если нужно
         $dir = dirname($fullPath);
         if (!$this->filesystem->exists($dir)) {
-            $this->filesystem->mkdir($dir, 0755, true);
+            $this->filesystem->mkdir($dir, 0755);
         }
 
         // Сохраняем файл (в Moodle файл сохраняется с именем равным хешу содержимого)
@@ -89,8 +91,8 @@ readonly class FileService
         // Сохраняем путь к директории относительно storage_path (для совместимости с Moodle)
         // filepath должен быть типа /a1/b2/c3/, где a1/b2/c3 - поддиректории из хеша
         // TODO придумать что то с папками  надо будет
-//        $fileDir = dirname($filePath);
-//        $file->setFilepath('/' . str_replace('\\', '/', $fileDir) . '/');
+        //        $fileDir = dirname($filePath);
+        //        $file->setFilepath('/' . str_replace('\\', '/', $fileDir) . '/');
         $file->setFilepath('/');
         $file->setFilename($uploadedFile->getClientOriginalName());
         $file->setUserid($userid);
@@ -140,8 +142,8 @@ readonly class FileService
         // - itemid = draftItemId
         $file = $this->entityManager->getRepository(File::class)->findOneBy([
             'component' => $component,
-            'filearea'  => 'draft',
-            'itemid'    => $draftItemId,
+            'filearea' => 'draft',
+            'itemid' => $draftItemId,
         ]);
 
         if (!$file instanceof File) {
@@ -168,10 +170,10 @@ readonly class FileService
      * @param int $draftItemId Новый draft item ID
      * @return File|null Скопированный файл в draft или null если не найден
      */
-    public function copyToDraft(int $fileId, int $draftItemId): ?File
+    public function copyToDraft(int $fileId, int $draftItemId, bool $flush = true): ?File
     {
         // Находим оригинальный файл
-        $originalFile = $this->entityManager->getRepository(File::class)->find($fileId);
+        $originalFile = $this->fileRepository->find($fileId);
 
         if (!$originalFile instanceof File) {
             return null;
@@ -182,9 +184,9 @@ readonly class FileService
         $draftFile->setContenthash($originalFile->getContenthash());
         $draftFile->setPathnamehash($originalFile->getPathnamehash());
         $draftFile->setContextid($originalFile->getContextid());
-        $draftFile->setComponent($originalFile->getComponent());
-        $draftFile->setFilearea('draft'); // DRAFT!
-        $draftFile->setItemid($draftItemId); // Новый draft ID
+        $draftFile->setComponent('user');
+        $draftFile->setFilearea('draft');
+        $draftFile->setItemid($draftItemId);
         $draftFile->setFilepath($originalFile->getFilepath());
         $draftFile->setFilename($originalFile->getFilename());
         $draftFile->setUserid($originalFile->getUserid());
@@ -195,19 +197,154 @@ readonly class FileService
         $draftFile->setTimemodified(time());
         $draftFile->setSortorder($originalFile->getSortorder());
         $draftFile->setAuthor($originalFile->getAuthor());
-        $draftFile->setReferencefileid($originalFile->getId()); // Ссылка на оригинал
-
-        $this->entityManager->persist($draftFile);
-        $this->entityManager->flush();
+        $draftFile->setReferencefileid($originalFile->getId());
+        $this->fileRepository->save($draftFile, $flush);
 
         return $draftFile;
+    }
+
+    public function createEmptyDraftFile(int $draftItemId, ?int $userid, bool $flush = true): File
+    {
+        $draftFile = new File();
+        $draftFile->setContenthash(''); // Пустой хеш
+        $draftFile->setPathnamehash('');
+        $draftFile->setContextid(1);
+        $draftFile->setComponent('user');
+        $draftFile->setFilearea('draft');
+        $draftFile->setItemid($draftItemId);
+        $draftFile->setFilepath('/');
+        $draftFile->setFilename('');
+        $draftFile->setUserid($userid);
+        $draftFile->setFilesize(0);
+        $draftFile->setMimetype('');
+        $draftFile->setStatus(0);
+        $draftFile->setTimecreated(time());
+        $draftFile->setTimemodified(time());
+        $draftFile->setSortorder(0);
+        $draftFile->setAuthor(null);
+
+        return $this->fileRepository->save($draftFile, $flush);
+    }
+
+    /**
+     * Удаляет файл из базы данных и файловой системы.
+     * Физический файл удаляется только если нет других записей с таким же contenthash.
+     *
+     * @param int $fileId ID файла для удаления
+     * @param bool $flush Нужно ли сразу выполнить flush (по умолчанию false, чтобы не нарушать транзакции)
+     * @return bool true если файл был удален, false если не найден
+     */
+    public function deleteFile(int $fileId, bool $flush = false): bool
+    {
+        $file = $this->entityManager->getRepository(File::class)->find((int)$fileId);
+
+        if (!$file instanceof File) {
+            return false;
+        }
+
+        $contenthash = $file->getContenthash();
+
+        // Проверяем, есть ли другие записи с таким же contenthash
+        $otherFilesCount = $this->entityManager->getRepository(File::class)
+            ->createQueryBuilder('f')
+            ->select('COUNT(f.id)')
+            ->where('f.contenthash = :contenthash')
+            ->andWhere('f.id != :fileId')
+            ->setParameter('contenthash', $contenthash)
+            ->setParameter('fileId', $file->getId())
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        // Удаляем физический файл только если нет других записей с таким же contenthash
+        if ($otherFilesCount === 0) {
+            $storagePath = $this->parameterBag->get('slcorp_file.storage_path');
+            $filePath = $this->getFilePathFromHash($contenthash);
+            $fullPath = $storagePath . \DIRECTORY_SEPARATOR . $filePath;
+
+            if ($this->filesystem->exists($fullPath)) {
+                $this->filesystem->remove($fullPath);
+            }
+        }
+
+        // Удаляем запись из БД
+        $this->entityManager->remove($file);
+
+        if ($flush) {
+            $this->entityManager->flush();
+        }
+
+        return true;
+    }
+
+    /**
+     * Удаляет старые файлы из draft area.
+     *
+     * @param int $olderThanDays Удалять файлы старше указанного количества дней
+     * @param string $component Компонент (по умолчанию 'user')
+     * @return int Количество удаленных файлов
+     */
+    public function deleteOldDraftFiles(int $olderThanDays = 7, string $component = 'user'): int
+    {
+        $timestamp = time() - ($olderThanDays * 24 * 60 * 60);
+
+        $draftFiles = $this->entityManager->getRepository(File::class)
+            ->createQueryBuilder('f')
+            ->where('f.component = :component')
+            ->andWhere('f.filearea = :filearea')
+            ->andWhere('f.timecreated < :timestamp')
+            ->setParameter('component', $component)
+            ->setParameter('filearea', 'draft')
+            ->setParameter('timestamp', $timestamp)
+            ->getQuery()
+            ->getResult();
+
+        $deletedCount = 0;
+        $contenthashesToCheck = [];
+
+        foreach ($draftFiles as $file) {
+            $contenthash = $file->getContenthash();
+
+            // Проверяем, есть ли другие записи с таким же contenthash (включая другие draft файлы)
+            // Используем ID текущего файла, чтобы не учитывать его при подсчете
+            $otherFilesCount = $this->entityManager->getRepository(File::class)
+                ->createQueryBuilder('f')
+                ->select('COUNT(f.id)')
+                ->where('f.contenthash = :contenthash')
+                ->andWhere('f.id != :fileId')
+                ->setParameter('contenthash', $contenthash)
+                ->setParameter('fileId', $file->getId())
+                ->getQuery()
+                ->getSingleScalarResult();
+
+            // Удаляем физический файл только если нет других записей с таким же contenthash
+            // и мы еще не проверяли этот contenthash
+            if ($otherFilesCount === 0 && !in_array($contenthash, $contenthashesToCheck, true)) {
+                $storagePath = $this->parameterBag->get('slcorp_file.storage_path');
+                $filePath = $this->getFilePathFromHash($contenthash);
+                $fullPath = $storagePath . \DIRECTORY_SEPARATOR . $filePath;
+
+                if ($this->filesystem->exists($fullPath)) {
+                    $this->filesystem->remove($fullPath);
+                }
+
+                $contenthashesToCheck[] = $contenthash;
+            }
+
+            // Удаляем запись из БД
+            $this->entityManager->remove($file);
+            $deletedCount++;
+        }
+
+        $this->entityManager->flush();
+
+        return $deletedCount;
     }
 
     /**
      * Генерирует путь к файлу на основе хеша (как в Moodle)
      * Например: a1/b2/c3/d4/e5/f6/.../a1b2c3d4e5f6...
      */
-    private function getFilePathFromHash(string $hash): string
+    public function getFilePathFromHash(string $hash): string
     {
         // Берем первые 2 символа для первого уровня
         $level1 = mb_substr($hash, 0, 2);

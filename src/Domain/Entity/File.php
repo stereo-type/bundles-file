@@ -319,4 +319,9 @@ class File
 
         return $this;
     }
+
+    public function isDraft(): bool
+    {
+        return $this->filesize === 0 && $this->contenthash === '' && $this->pathnamehash === '';
+    }
 }

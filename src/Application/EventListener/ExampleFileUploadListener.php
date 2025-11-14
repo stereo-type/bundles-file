@@ -43,7 +43,7 @@ class ExampleFileUploadListener implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            PreUploadEvent::NAME  => 'onPreUpload',
+            PreUploadEvent::NAME => 'onPreUpload',
             PostUploadEvent::NAME => 'onPostUpload',
             PostPersistEvent::NAME => 'onPostPersist',
         ];

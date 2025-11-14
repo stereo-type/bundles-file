@@ -45,7 +45,6 @@ abstract class BaseUploadController extends AbstractController implements Upload
     )]
     public function delete(Request $request, int $fileId): JsonResponse
     {
-        dd('delete BaseUploadController');
         $file = $this->entityManager->getRepository(File::class)->find($fileId);
 
         if (!$file instanceof File) {
@@ -66,10 +65,10 @@ abstract class BaseUploadController extends AbstractController implements Upload
     {
         return [
             'component' => $request->request->get('component', 'default'),
-            'filearea'  => $request->request->get('filearea', 'default'),
-            'itemid'    => (int)$request->request->get('itemid', 0),
+            'filearea' => $request->request->get('filearea', 'default'),
+            'itemid' => (int)$request->request->get('itemid', 0),
             'contextid' => (int)$request->request->get('contextid', 1),
-            'userid'    => $request->request->get('userid') ? (int)$request->request->get('userid') : null,
+            'userid' => $request->request->get('userid') ? (int)$request->request->get('userid') : null,
         ];
     }
 

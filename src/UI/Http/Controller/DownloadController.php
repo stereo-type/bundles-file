@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Slcorp\FileBundle\UI\Http\Controller;
 
-use App\Features\Security\Application\Service\CapabilityService;
 use Doctrine\ORM\EntityManagerInterface;
+use Slcorp\FileBundle\Application\Service\FileService;
 use Slcorp\FileBundle\Domain\Entity\File;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -25,7 +25,7 @@ class DownloadController extends AbstractController
     public function __construct(
         private readonly ParameterBagInterface $parameterBag,
         private readonly EntityManagerInterface $entityManager,
-        private readonly CapabilityService $capabilityService,
+        private readonly FileService $fileService,
     ) {
     }
 
@@ -48,14 +48,17 @@ class DownloadController extends AbstractController
 
         // Получаем путь к файлу
         $storagePath = $this->parameterBag->get('slcorp_file.storage_path');
-        $filePath = $file->getFilepath(); // Например: /a1/b2/c3d4e5f6.../
-        $contenthash = $file->getContenthash();
+        $debug = $this->parameterBag->get('app.debug');
 
         // Полный путь: storage_path + filepath + contenthash
-        $fullPath = mb_rtrim($storagePath, '/') . $filePath . $contenthash;
+        $fullPath = mb_rtrim($storagePath, '/') . '/' . $this->fileService->getFilePathFromHash($file->getContenthash());
 
         if (!file_exists($fullPath)) {
-            throw $this->createNotFoundException('Physical file not found');
+            $error = 'Physical file not found.';
+            if ($debug) {
+                $error .= ' Path: ' . $fullPath;
+            }
+            throw $this->createNotFoundException($error);
         }
 
         // Возвращаем файл

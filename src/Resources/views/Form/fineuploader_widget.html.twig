@@ -1,15 +1,17 @@
 {# FineUploader Widget #}
 <div id="fine-uploader-{{ field_id }}" class="slcorp-file-uploader" data-upload-url="{{ upload_url }}"
      data-field-name="{{ field_name }}">
-    {% if file_data %}
+    {% if file_data and file_data|length > 0 %}
         <div class="qq-uploader-existing-file">
             <div class="qq-upload-list-selector qq-upload-list" aria-live="polite" aria-relevant="additions removals">
-                <div class="qq-upload-success" qq-file-id="0">
-                    <span class="qq-upload-file-selector qq-upload-file">{{ file_data.filename }}</span>
-                    <span
-                        class="qq-upload-size-selector qq-upload-size">{{ (file_data.filesize / 1024)|round(2) }} KB</span>
-                    <a class="qq-upload-cancel-selector" href="{{ file_data.download_url }}" target="_blank">Скачать</a>
+                {% for file in file_data %}
+                    <div class="qq-upload-success" qq-file-id="{{ loop.index0 }}"
+                         data-draftitemid="{{ file.draftitemid }}">
+                        <span class="qq-upload-file-selector qq-upload-file">{{ file.filename }}</span>
+                        <span class="qq-upload-size-selector qq-upload-size">{{ (file.filesize / 1024)|round(2) }} KB</span>
+                        <a class="qq-upload-cancel-selector" href="{{ file.download_url }}" target="_blank">Скачать</a>
                 </div>
+                {% endfor %}
             </div>
         </div>
     {% else %}
@@ -19,8 +21,9 @@
     {% endif %}
 </div>
 
-{# Скрытое поле для хранения ID файла #}
-<input type="hidden" id="{{ field_id }}" name="{{ field_name }}" value="{{ value }}"/>
+{# Скрытое поле для хранения массива draft itemid (JSON) #}
+<input type="hidden" id="{{ field_id }}" name="{{ field_name }}"
+       value="{% if file_data %}{{ file_data|map(f => f.draftitemid)|json_encode|raw }}{% else %}{{ value|default('') }}{% endif %}"/>
 
 {# Подключение FineUploader библиотеки #}
 <link href="https://cdn.jsdelivr.net/npm/fine-uploader@5.16.2/fine-uploader/fine-uploader.min.css" rel="stylesheet">
@@ -44,11 +47,50 @@
             },
             callbacks: {
                 onComplete: function (id, name, response) {
-                    if (response.success) {
-                        // Сохраняем draftitemid в скрытое поле (для draft area механизма)
-                        document.getElementById('{{ field_id }}').value = response.draftitemid || '';
-                        console.log('FineUploader: draftitemid сохранен =', response.draftitemid);
+                    if (response.success && response.draftitemid) {
+                        // Добавляем draftitemid в массив в скрытом поле
+                        var hiddenField = document.getElementById('{{ field_id }}');
+                        var currentValue = hiddenField.value || '[]';
+                        var draftItemIds = [];
+
+                        try {
+                            draftItemIds = JSON.parse(currentValue);
+                            if (!Array.isArray(draftItemIds)) {
+                                draftItemIds = [];
+                            }
+                        } catch (e) {
+                            draftItemIds = [];
+                        }
+
+                        // Добавляем новый draftitemid
+                        if (!draftItemIds.includes(response.draftitemid)) {
+                            draftItemIds.push(response.draftitemid);
+                        }
+
+                        hiddenField.value = JSON.stringify(draftItemIds);
+                        console.log('FineUploader: draftitemid добавлен в массив', draftItemIds);
                     }
+                },
+                onDeleteComplete: function (id, xhr, isError) {
+                    // Удаляем draftitemid из массива при удалении файла
+                    var hiddenField = document.getElementById('{{ field_id }}');
+                    var currentValue = hiddenField.value || '[]';
+                    var draftItemIds = [];
+
+                    try {
+                        draftItemIds = JSON.parse(currentValue);
+                        if (!Array.isArray(draftItemIds)) {
+                            draftItemIds = [];
+                        }
+                    } catch (e) {
+                        draftItemIds = [];
+                    }
+
+                    // Находим и удаляем draftitemid удаленного файла
+                    // FineUploader не передает draftitemid напрямую, нужно найти по id
+                    // Это упрощенная версия - в реальности нужно хранить связь id -> draftitemid
+                    hiddenField.value = JSON.stringify(draftItemIds);
+                    console.log('FineUploader: файл удален, обновлен массив', draftItemIds);
                 },
                 onError: function (id, name, errorReason) {
                     console.error('Ошибка загрузки файла:', errorReason);

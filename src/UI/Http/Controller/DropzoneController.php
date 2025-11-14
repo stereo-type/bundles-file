@@ -40,10 +40,10 @@ class DropzoneController extends BaseUploadController
     protected function createSuccessResponse(File $file): Response
     {
         return new JsonResponse([
-            'id'          => $file->getId(),
-            'name'        => $file->getFilename(),
-            'size'        => $file->getFilesize(),
-            'url'         => $this->generateUrl('slcorp_file_download', ['id' => $file->getId()]),
+            'id' => $file->getId(),
+            'name' => $file->getFilename(),
+            'size' => $file->getFilesize(),
+            'url' => $this->generateUrl('slcorp_file_download', ['id' => $file->getId()]),
             'draftitemid' => $file->getItemid(), // itemid = draft ID когда filearea='draft'
         ]);
     }

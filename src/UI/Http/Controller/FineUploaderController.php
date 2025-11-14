@@ -40,10 +40,10 @@ class FineUploaderController extends BaseUploadController
     protected function createSuccessResponse(File $file): Response
     {
         return new JsonResponse([
-            'success'     => true,
-            'uuid'        => (string)$file->getId(),
-            'name'        => $file->getFilename(),
-            'size'        => $file->getFilesize(),
+            'success' => true,
+            'uuid' => (string)$file->getId(),
+            'name' => $file->getFilename(),
+            'size' => $file->getFilesize(),
             'draftitemid' => $file->getItemid(), // itemid = draft ID когда filearea='draft'
         ]);
     }
@@ -52,7 +52,7 @@ class FineUploaderController extends BaseUploadController
     {
         return new JsonResponse([
             'success' => false,
-            'error'   => $message,
+            'error' => $message,
         ], $statusCode);
     }
 
