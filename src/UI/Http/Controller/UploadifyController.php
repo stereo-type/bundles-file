@@ -13,12 +13,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
- * Контроллер для Fine Uploader UI библиотеки.
+ * Контроллер для Uploadify UI библиотеки.
  *
  * @copyright  2024 Zhalayletdinov Vyacheslav evil_tut@mail.ru
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class FineUploaderController extends BaseUploadController
+class UploadifyController extends BaseUploadController
 {
     public function upload(Request $request): Response
     {
@@ -39,22 +39,20 @@ class FineUploaderController extends BaseUploadController
 
     protected function createSuccessResponse(File $file): Response
     {
-        // Fine Uploader ожидает JSON с полем success: true и данными файла
+        // Uploadify ожидает простой текст "1" при успехе или JSON с данными
+        // Возвращаем JSON с данными файла
         return new JsonResponse([
             'success' => true,
             'name' => $file->getFilename(),
             'size' => $file->getFilesize(),
             'url' => $this->generateUrl('slcorp_file_download', ['id' => $file->getId()]),
-            'thumbnailUrl' => $file->getMimetype() && str_starts_with($file->getMimetype(), 'image/')
-                ? $this->generateUrl('slcorp_file_download', ['id' => $file->getId()])
-                : null,
             'draftitemid' => $file->getItemid(), // itemid = draft ID когда filearea='draft'
         ]);
     }
 
     protected function createErrorResponse(string $message, int $statusCode = Response::HTTP_BAD_REQUEST): Response
     {
-        // Fine Uploader ожидает JSON с полем success: false и error
+        // Uploadify ожидает текст "0" при ошибке или JSON с ошибкой
         return new JsonResponse([
             'success' => false,
             'error' => $message,
@@ -62,13 +60,13 @@ class FineUploaderController extends BaseUploadController
     }
 
     /**
-     * Получает загруженный файл из запроса Fine Uploader.
+     * Получает загруженный файл из запроса Uploadify.
      */
     private function getUploadedFile(Request $request): ?UploadedFile
     {
-        // Fine Uploader отправляет файл как 'qqfile'
-        if ($request->files->has('qqfile')) {
-            return $request->files->get('qqfile');
+        // Uploadify отправляет файл как 'Filedata'
+        if ($request->files->has('Filedata')) {
+            return $request->files->get('Filedata');
         }
 
         // Альтернативный вариант - 'file'
@@ -81,6 +79,7 @@ class FineUploaderController extends BaseUploadController
 
     public function library(): FileUILibrary
     {
-        return FileUILibrary::FINE_UPLOADER;
+        return FileUILibrary::UPLOADIFY;
     }
 }
+

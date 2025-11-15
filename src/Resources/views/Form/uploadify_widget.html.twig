@@ -1,5 +1,8 @@
-{# Fine Uploader Widget - используем встроенные возможности библиотеки #}
-<div id="fineuploader-{{ field_id }}" class="slcorp-file-uploader fineuploader-wrapper"></div>
+{# Uploadify Widget - используем встроенные возможности библиотеки #}
+<div id="uploadify-{{ field_id }}" class="slcorp-file-uploader uploadify-wrapper">
+    <div id="uploadify-button-{{ field_id }}"></div>
+    <div id="uploadify-queue-{{ field_id }}" class="uploadify-queue"></div>
+</div>
 
 {# Модальное окно для ошибок #}
 <div id="error-modal-{{ field_id }}" class="error-modal" style="display: none;">
@@ -23,43 +26,36 @@
 <input type="hidden" id="{{ field_id }}" name="{{ field_name }}"
        value="{% if file_data %}{{ file_data|map(f => f.draftitemid)|json_encode|raw }}{% else %}{{ value|default('[]') }}{% endif %}"/>
 
-{# Подключение Fine Uploader библиотеки #}
-<link href="https://cdn.jsdelivr.net/npm/fine-uploader@5.16.2/fine-uploader.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/fine-uploader@5.16.2/fine-uploader.min.js"></script>
+{# Подключение jQuery и Uploadify библиотеки #}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uploadify@1.0.7/index.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/jquery.uploadify@3.2.1/uploadify.css" rel="stylesheet">
 
 <style>
-    /* Стили для Fine Uploader */
-    #fineuploader-{{ field_id }}.fineuploader-wrapper {
+    /* Стили для Uploadify */
+    #uploadify-{{ field_id }}.uploadify-wrapper {
         font-family: Arial, sans-serif;
     }
 
-    #fineuploader-{{ field_id }} .qq-uploader {
-        min-height: 200px;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-button {
-        display: inline-block;
-        padding: 10px 20px;
+    #uploadify-{{ field_id }} .uploadify-button {
         background: #007bff;
         color: white;
+        padding: 10px 20px;
         border: none;
         border-radius: 4px;
         cursor: pointer;
         font-size: 16px;
-        transition: background 0.2s;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-button:hover {
+    #uploadify-{{ field_id }} .uploadify-button:hover {
         background: #0056b3;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list {
-        list-style: none;
-        padding: 0;
-        margin: 20px 0 0 0;
+    #uploadify-{{ field_id }} .uploadify-queue {
+        margin-top: 20px;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list li {
+    #uploadify-{{ field_id }} .uploadify-queue-item {
         display: flex;
         align-items: center;
         padding: 15px;
@@ -70,7 +66,7 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-thumbnail-wrapper {
+    #uploadify-{{ field_id }} .uploadify-queue-item .file-preview {
         width: 80px;
         height: 80px;
         margin-right: 15px;
@@ -83,69 +79,50 @@
         flex-shrink: 0;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-thumbnail-wrapper img {
+    #uploadify-{{ field_id }} .uploadify-queue-item .file-preview img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-file-info {
+    #uploadify-{{ field_id }} .uploadify-queue-item .file-info {
         flex: 1;
         min-width: 0;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-file-name {
+    #uploadify-{{ field_id }} .uploadify-queue-item .file-name {
         font-weight: 500;
         margin-bottom: 5px;
         word-break: break-word;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-file-size {
+    #uploadify-{{ field_id }} .uploadify-queue-item .file-size {
         color: #666;
         font-size: 14px;
-        margin-bottom: 10px;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-progress-bar {
+    #uploadify-{{ field_id }} .uploadify-queue-item .uploadify-progress {
         width: 100%;
         height: 6px;
         background: #f0f0f0;
         border-radius: 3px;
         overflow: hidden;
-        margin-bottom: 10px;
+        margin-top: 10px;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-progress-bar .qq-progress-bar-container {
+    #uploadify-{{ field_id }} .uploadify-progress-bar {
         height: 100%;
         background: #007bff;
         transition: width 0.3s;
         border-radius: 3px;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-status-text {
+    #uploadify-{{ field_id }} .uploadify-queue-item .file-actions {
         margin-left: 15px;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-status-text.qq-upload-status-uploading {
-        background: #fff3cd;
-        color: #856404;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-status-text.qq-upload-status-success {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-status-text.qq-upload-status-error {
-        background: #f8d7da;
-        color: #721c24;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-delete,
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-cancel {
+    #uploadify-{{ field_id }} .uploadify-queue-item .cancel,
+    #uploadify-{{ field_id }} .uploadify-queue-item .delete {
         padding: 8px 16px;
         background: #dc3545;
         color: white;
@@ -154,11 +131,10 @@
         cursor: pointer;
         font-size: 14px;
         transition: background 0.2s;
-        margin-left: 15px;
     }
 
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-delete:hover,
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-cancel:hover {
+    #uploadify-{{ field_id }} .uploadify-queue-item .cancel:hover,
+    #uploadify-{{ field_id }} .uploadify-queue-item .delete:hover {
         background: #c82333;
     }
 
@@ -329,115 +305,127 @@
             e.stopPropagation();
         });
 
-        // Подготовка разрешенных MIME типов для Fine Uploader
-        var allowedExtensions = [];
+        // Подготовка разрешенных MIME типов для Uploadify
+        var allowedMimeTypes = [];
         {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}
-        var allowedMimeTypes = '{{ form.vars.attr['data-allowed-extensions'] }}'.split(',').map(function (type) {
+        allowedMimeTypes = '{{ form.vars.attr['data-allowed-extensions'] }}'.split(',').map(function (type) {
             return type.trim();
         }).filter(function (type) {
             return type.length > 0;
         });
-
-        // Преобразуем MIME типы в расширения
-        allowedExtensions = allowedMimeTypes.map(function (mime) {
-            var parts = mime.split('/');
-            if (parts.length === 2) {
-                var ext = parts[1];
-                if (ext === 'jpeg') return 'jpg,jpeg';
-                return ext;
-            }
-            return '';
-        }).filter(function (ext) {
-            return ext.length > 0;
-        });
         {% endif %}
 
-        // Инициализация Fine Uploader - используем встроенные возможности библиотеки
-        var uploader = new qq.FineUploader({
-            element: document.getElementById('fineuploader-{{ field_id }}'),
-            request: {
-                endpoint: '{{ upload_url }}',
-                params: {
-                    component: '{{ component }}',
-                    filearea: '{{ filearea }}',
-                    itemid: {{ itemid }},
-                    contextid: {{ contextid }}
-                    {% if userid is not null %},
-                    userid: {{ userid }}
-                    {% endif %}
+        // Преобразуем MIME типы в расширения для Uploadify
+        var fileExt = '';
+        if (allowedMimeTypes.length > 0) {
+            fileExt = allowedMimeTypes.map(function (mime) {
+                var parts = mime.split('/');
+                if (parts.length === 2) {
+                    var ext = parts[1];
+                    if (ext === 'jpeg') ext = 'jpg,jpeg';
+                    return ext;
                 }
+                return '';
+            }).filter(function (ext) {
+                return ext.length > 0;
+            }).join(';');
+        }
+
+        // Инициализация Uploadify - используем встроенные возможности библиотеки
+        $('#uploadify-button-{{ field_id }}').uploadify({
+            'swf': 'https://cdn.jsdelivr.net/npm/jquery.uploadify@3.2.1/uploadify.swf',
+            'uploader': '{{ upload_url }}',
+            'buttonText': 'Выбрать файл{% if form.vars.attr['data-max-files']|default(1) > 1 %}ы{% endif %}',
+            'fileTypeExts': fileExt || '*.*',
+            'fileSizeLimit': (maxFileSize / 1048576) + 'MB',
+            'multi': maxFiles > 1,
+            'queueSizeLimit': maxFiles,
+            'formData': {
+                'component': '{{ component }}',
+                'filearea': '{{ filearea }}',
+                'itemid': {{ itemid }},
+                'contextid': {{ contextid }}
+                {% if userid is not null %},
+                'userid': {{ userid }}
+                {% endif %}
             },
-            validation: {
-                allowedExtensions: allowedExtensions.length > 0 ? allowedExtensions : null,
-                sizeLimit: maxFileSize,
-                itemLimit: maxFiles
-            },
-            multiple: maxFiles > 1,
-            // Используем встроенные обработчики Fine Uploader
-            callbacks: {
-                onSubmit: function (id, fileName) {
-                    // Если maxFiles = 1, удаляем предыдущие файлы
-                    if (maxFiles === 1 && uploadedFiles.length >= 1) {
-                        var allFiles = uploader.getUploads();
-                        allFiles.forEach(function (file) {
-                            if (file.status === qq.status.UPLOAD_SUCCESSFUL) {
-                                uploader.deleteFile(file.id);
+            'onUploadSuccess': function (file, data, response) {
+                // Обработка успешной загрузки
+                try {
+                    var result = typeof data === 'string' ? JSON.parse(data) : data;
+                    if (result.success && result.draftitemid) {
+                        // Обновляем элемент очереди - убираем прогресс, добавляем превью
+                        var queueItem = $('#uploadify-{{ field_id }}').data('uploadify').queueData[file.id];
+                        if (queueItem) {
+                            var $queueItem = $(queueItem.queueItem);
+                            var isImage = result.url && file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                            var previewHtml = '';
+                            if (isImage && result.url) {
+                                previewHtml = '<img src="' + result.url + '" alt="' + result.name + '">';
+                            } else {
+                                previewHtml = '<span style="font-size: 40px; color: #ccc;">📄</span>';
                             }
-                        });
-                        uploadedFiles = [];
-                        updateHiddenField();
-                    }
-                    return true;
-                },
-                onComplete: function (id, fileName, responseJSON) {
-                    // Обработка успешной загрузки
-                    if (responseJSON.success && responseJSON.draftitemid) {
-                        // Сохраняем draftitemid в элемент файла
-                        var fileItem = uploader.getItemByFileId(id);
-                        if (fileItem) {
-                            fileItem.setAttribute('data-draftitemid', responseJSON.draftitemid);
+
+                            $queueItem.attr('data-draftitemid', result.draftitemid);
+                            $queueItem.html(
+                                '<div style="display: flex; align-items: center; width: 100%;">' +
+                                '<div class="file-preview">' + previewHtml + '</div>' +
+                                '<div class="file-info">' +
+                                '<div class="file-name">' + result.name + '</div>' +
+                                '<div class="file-size">' + (result.size / 1024).toFixed(2) + ' KB</div>' +
+                                '</div>' +
+                                '<div class="file-actions">' +
+                                '<button type="button" class="delete" data-draftitemid="' + result.draftitemid + '">Удалить</button>' +
+                                '</div>' +
+                                '</div>'
+                            );
                         }
 
                         uploadedFiles.push({
-                            draftitemid: responseJSON.draftitemid,
-                            filename: responseJSON.name || fileName
+                            draftitemid: result.draftitemid,
+                            filename: result.name
                         });
                         updateHiddenField();
                     }
-                },
-                onError: function (id, name, errorReason, xhr) {
-                    // Обработка ошибок
-                    var errorMessage = errorReason || 'Ошибка загрузки файла';
-                    if (xhr && xhr.responseText) {
-                        try {
-                            var errorResponse = JSON.parse(xhr.responseText);
-                            if (errorResponse.error) {
-                                errorMessage = errorResponse.error;
-                            }
-                        } catch (e) {
-                            // Используем стандартное сообщение
-                        }
-                    }
-                    showErrorModal(errorMessage);
-                },
-                onValidate: function (data, buttonContainer) {
-                    // Валидация через встроенные возможности Fine Uploader
-                    return true;
-                },
-                onValidateBatch: function (fileOrBlobDataArray, buttonContainer) {
-                    // Проверяем максимальное количество файлов
-                    if (uploadedFiles.length + fileOrBlobDataArray.length > maxFiles) {
-                        showErrorModal('Максимальное количество файлов: ' + maxFiles);
-                        return false;
-                    }
-                    return true;
+                } catch (e) {
+                    console.error('Ошибка парсинга ответа', e);
                 }
+            },
+            'onUploadError': function (file, errorCode, errorMsg, errorString) {
+                // Обработка ошибок
+                var errorMessage = errorMsg || 'Ошибка загрузки файла';
+                if (errorString) {
+                    try {
+                        var errorResponse = typeof errorString === 'string' ? JSON.parse(errorString) : errorString;
+                        if (errorResponse.error) {
+                            errorMessage = errorResponse.error;
+                        }
+                    } catch (e) {
+                        // Используем стандартное сообщение
+                    }
+                }
+                showErrorModal(errorMessage);
+            },
+            'onSelectError': function (file, errorCode, errorMsg) {
+                // Обработка ошибок выбора файла
+                var errorMessage = errorMsg || 'Ошибка выбора файла';
+                if (errorCode === SWFUpload.UPLOAD_ERROR.FILE_EXCEEDS_SIZE_LIMIT) {
+                    errorMessage = 'Файл слишком большой. Максимальный размер: ' + (maxFileSize / 1048576).toFixed(2) + ' МБ';
+                } else if (errorCode === SWFUpload.UPLOAD_ERROR.ZERO_BYTE_FILE) {
+                    errorMessage = 'Файл пустой';
+                } else if (errorCode === SWFUpload.UPLOAD_ERROR.INVALID_FILETYPE) {
+                    errorMessage = 'Тип файла не разрешен';
+                }
+                showErrorModal(errorMessage);
+            },
+            'onQueueFull': function (event, queueSizeLimit) {
+                showErrorModal('Максимальное количество файлов: ' + queueSizeLimit);
             }
         });
 
         // Загружаем существующие файлы
         if (fileData && Array.isArray(fileData) && fileData.length > 0) {
-            var $uploadList = $('#fineuploader-{{ field_id }} .qq-upload-list');
+            var $queue = $('#uploadify-queue-{{ field_id }}');
             fileData.forEach(function (file) {
                 var isImage = file.mimetype && file.mimetype.startsWith('image/');
                 var previewHtml = '';
@@ -447,16 +435,19 @@
                     previewHtml = '<span style="font-size: 40px; color: #ccc;">📄</span>';
                 }
 
-                var $fileItem = $('<li class="qq-upload-success" data-draftitemid="' + file.draftitemid + '">' +
-                    '<div class="qq-thumbnail-wrapper">' + previewHtml + '</div>' +
-                    '<div class="qq-file-info">' +
-                    '<div class="qq-file-name">' + file.filename + '</div>' +
-                    '<div class="qq-file-size">' + (file.filesize / 1024).toFixed(2) + ' KB</div>' +
+                var $fileItem = $('<div class="uploadify-queue-item" data-draftitemid="' + file.draftitemid + '">' +
+                    '<div style="display: flex; align-items: center; width: 100%;">' +
+                    '<div class="file-preview">' + previewHtml + '</div>' +
+                    '<div class="file-info">' +
+                    '<div class="file-name">' + file.filename + '</div>' +
+                    '<div class="file-size">' + (file.filesize / 1024).toFixed(2) + ' KB</div>' +
                     '</div>' +
-                    '<span class="qq-upload-status-text qq-upload-status-success">Загружено</span>' +
-                    '<button type="button" class="qq-upload-delete" data-draftitemid="' + file.draftitemid + '">Удалить</button>' +
-                    '</li>');
-                $uploadList.append($fileItem);
+                    '<div class="file-actions">' +
+                    '<button type="button" class="delete" data-draftitemid="' + file.draftitemid + '">Удалить</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>');
+                $queue.append($fileItem);
 
                 uploadedFiles.push({
                     draftitemid: file.draftitemid,
@@ -467,15 +458,16 @@
         }
 
         // Обработчик удаления файла
-        $(document).on('click', '#fineuploader-{{ field_id }} .qq-upload-delete', function () {
+        $(document).on('click', '#uploadify-queue-{{ field_id }} .delete', function () {
             var draftitemid = $(this).data('draftitemid');
             if (confirm('Вы уверены, что хотите удалить этот файл?')) {
                 uploadedFiles = uploadedFiles.filter(function (file) {
                     return file.draftitemid !== draftitemid;
                 });
                 updateHiddenField();
-                $(this).closest('li').remove();
+                $(this).closest('.uploadify-queue-item').remove();
             }
         });
     })();
 </script>
+

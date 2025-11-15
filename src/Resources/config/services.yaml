@@ -35,28 +35,11 @@ services:
   Slcorp\FileBundle\UI\Http\Controller\PluploadController:
     tags: [ 'slcorp.file.uploader_controller' ]
 
-      #  Slcorp\FileBundle\UI\Http\Controller\UploadifyController:
-      #      arguments:
-      #          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
-      #          $entityManager: '@doctrine.orm.entity_manager'
+  Slcorp\FileBundle\UI\Http\Controller\UploadifyController:
+    tags: [ 'slcorp.file.uploader_controller' ]
 
-      #  Slcorp\FileBundle\UI\Http\Controller\BluimpController:
-      #      arguments:
-      #          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
-      #          $entityManager: '@doctrine.orm.entity_manager'
-
-    # ServiceLocator для контроллеров
-      #  slcorp_file.upload_controllers_locator:
-      #      class: Symfony\Component\DependencyInjection\ServiceLocator
-      #      arguments:
-      #          -   'Slcorp\FileBundle\UI\Http\Controller\FineUploaderController': '@Slcorp\FileBundle\UI\Http\Controller\FineUploaderController'
-      #              'Slcorp\FileBundle\UI\Http\Controller\DropzoneController': '@Slcorp\FileBundle\UI\Http\Controller\DropzoneController'
-      #              'Slcorp\FileBundle\UI\Http\Controller\JQueryFileUploadController': '@Slcorp\FileBundle\UI\Http\Controller\JQueryFileUploadController'
-      #              'Slcorp\FileBundle\UI\Http\Controller\PluploadController': '@Slcorp\FileBundle\UI\Http\Controller\PluploadController'
-      #              'Slcorp\FileBundle\UI\Http\Controller\UploadifyController': '@Slcorp\FileBundle\UI\Http\Controller\UploadifyController'
-      #              'Slcorp\FileBundle\UI\Http\Controller\BluimpController': '@Slcorp\FileBundle\UI\Http\Controller\BluimpController'
-      #      tags:
-      #          - { name: container.service_locator }
+  Slcorp\FileBundle\UI\Http\Controller\BluimpController:
+    tags: [ 'slcorp.file.uploader_controller' ]
 
     # Фабрика контроллеров
   Slcorp\FileBundle\UI\Http\Controller\ControllerFactory:

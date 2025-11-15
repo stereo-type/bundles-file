@@ -13,12 +13,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
- * Контроллер для Fine Uploader UI библиотеки.
+ * Контроллер для Blueimp UI библиотеки.
  *
  * @copyright  2024 Zhalayletdinov Vyacheslav evil_tut@mail.ru
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class FineUploaderController extends BaseUploadController
+class BluimpController extends BaseUploadController
 {
     public function upload(Request $request): Response
     {
@@ -39,39 +39,61 @@ class FineUploaderController extends BaseUploadController
 
     protected function createSuccessResponse(File $file): Response
     {
-        // Fine Uploader ожидает JSON с полем success: true и данными файла
-        return new JsonResponse([
-            'success' => true,
+        // Blueimp ожидает массив объектов файлов
+        $response = [
             'name' => $file->getFilename(),
             'size' => $file->getFilesize(),
             'url' => $this->generateUrl('slcorp_file_download', ['id' => $file->getId()]),
-            'thumbnailUrl' => $file->getMimetype() && str_starts_with($file->getMimetype(), 'image/')
-                ? $this->generateUrl('slcorp_file_download', ['id' => $file->getId()])
-                : null,
             'draftitemid' => $file->getItemid(), // itemid = draft ID когда filearea='draft'
-        ]);
+        ];
+
+        // Если это изображение, добавляем thumbnailUrl
+        if ($file->getMimetype() && str_starts_with($file->getMimetype(), 'image/')) {
+            $response['thumbnailUrl'] = $this->generateUrl('slcorp_file_download', ['id' => $file->getId()]);
+        }
+
+        // Возвращаем как массив (blueimp ожидает массив)
+        return new JsonResponse([$response]);
     }
 
     protected function createErrorResponse(string $message, int $statusCode = Response::HTTP_BAD_REQUEST): Response
     {
-        // Fine Uploader ожидает JSON с полем success: false и error
+        // Blueimp ожидает объект с полем error
         return new JsonResponse([
-            'success' => false,
             'error' => $message,
         ], $statusCode);
     }
 
     /**
-     * Получает загруженный файл из запроса Fine Uploader.
+     * Получает загруженный файл из запроса Blueimp.
      */
     private function getUploadedFile(Request $request): ?UploadedFile
     {
-        // Fine Uploader отправляет файл как 'qqfile'
-        if ($request->files->has('qqfile')) {
-            return $request->files->get('qqfile');
+        // Blueimp отправляет файлы как files[] (массив) или files
+        if ($request->files->has('files')) {
+            $files = $request->files->get('files');
+            // Если это массив, берем первый файл
+            if (is_array($files) && !empty($files)) {
+                return $files[0];
+            }
+            // Если это один файл
+            if ($files instanceof UploadedFile) {
+                return $files;
+            }
         }
 
-        // Альтернативный вариант - 'file'
+        // Альтернативный вариант - files[]
+        if ($request->files->has('files[]')) {
+            $files = $request->files->get('files[]');
+            if (is_array($files) && !empty($files)) {
+                return $files[0];
+            }
+            if ($files instanceof UploadedFile) {
+                return $files;
+            }
+        }
+
+        // Или просто file
         if ($request->files->has('file')) {
             return $request->files->get('file');
         }
@@ -81,6 +103,7 @@ class FineUploaderController extends BaseUploadController
 
     public function library(): FileUILibrary
     {
-        return FileUILibrary::FINE_UPLOADER;
+        return FileUILibrary::BLUIMP;
     }
 }
+
