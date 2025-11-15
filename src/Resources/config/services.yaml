@@ -24,20 +24,13 @@ services:
 
     # Контроллеры для загрузки файлов
   Slcorp\FileBundle\UI\Http\Controller\FineUploaderController:
-      arguments:
-          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
-          $entityManager: '@doctrine.orm.entity_manager'
+    tags: [ 'slcorp.file.uploader_controller' ]
 
   Slcorp\FileBundle\UI\Http\Controller\DropzoneController:
-      arguments:
-          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
-          $entityManager: '@doctrine.orm.entity_manager'
       tags: [ 'slcorp.file.uploader_controller' ]
 
-      #  Slcorp\FileBundle\UI\Http\Controller\JQueryFileUploadController:
-      #      arguments:
-      #          $fileService: '@Slcorp\FileBundle\Application\Service\FileService'
-      #          $entityManager: '@doctrine.orm.entity_manager'
+  Slcorp\FileBundle\UI\Http\Controller\JQueryFileUploadController:
+    tags: [ 'slcorp.file.uploader_controller' ]
 
       #  Slcorp\FileBundle\UI\Http\Controller\PluploadController:
       #      arguments:
