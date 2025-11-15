@@ -106,4 +106,3 @@ class BluimpController extends BaseUploadController
         return FileUILibrary::BLUIMP;
     }
 }
-

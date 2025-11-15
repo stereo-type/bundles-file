@@ -31,6 +31,19 @@ class SlcorpFileExtension extends Extension implements PrependExtensionInterface
                 $viewsPath => 'SlcorpFileBundle',
             ],
         ]);
+
+        // Регистрируем путь к переводам бандла
+        $bundlePath = \dirname(__DIR__, 3);
+        $translationsPath = $bundlePath . '/translations';
+        if (file_exists($translationsPath)) {
+            $container->prependExtensionConfig('framework', [
+                'translator' => [
+                    'paths' => [
+                        $translationsPath,
+                    ],
+                ],
+            ]);
+        }
     }
 
     public function load(array $configs, ContainerBuilder $container): void
@@ -43,6 +56,7 @@ class SlcorpFileExtension extends Extension implements PrependExtensionInterface
 
         $container->setParameter('slcorp_file.adapter', $config['adapter']);
         $container->setParameter('slcorp_file.ui_library', $config['ui_library'] ?? 'fineuploader');
+        $container->setParameter('slcorp_file.debug', $config['debug'] ?? false);
         // Разрешаем параметры в storage_path (например, %kernel.project_dir%)
         $storagePath = $container->getParameterBag()->resolveValue($config['storage_path']);
         $container->setParameter('slcorp_file.storage_path', $storagePath);
@@ -68,6 +82,7 @@ class SlcorpFileExtension extends Extension implements PrependExtensionInterface
 
         $this->addDoctrineMappings($container);
         $this->addRoutes($container);
+        $this->installAssets($container);
     }
 
     private function addRoutes(ContainerBuilder $container): void
@@ -113,6 +128,150 @@ class SlcorpFileExtension extends Extension implements PrependExtensionInterface
     public function getAlias(): string
     {
         return 'slcorp_file';
+    }
+
+    /**
+     * Устанавливает npm зависимости и копирует ассеты бандла.
+     * Выполняется только в dev окружении и только из CLI (не из веб-запросов).
+     */
+    private function installAssets(ContainerBuilder $container): void
+    {
+        // Выполняем только в dev окружении
+        $environment = $container->getParameter('kernel.environment');
+        if ($environment !== 'dev') {
+            return;
+        }
+
+        // Выполняем только из CLI (не из веб-запросов)
+        if (\PHP_SAPI !== 'cli') {
+            return;
+        }
+
+        $debug = $container->getParameter('slcorp_file.debug');
+        $bundlePath = \dirname(__DIR__, 3);
+        $packageJsonPath = $bundlePath . '/package.json';
+
+        if ($debug) {
+            echo "  [SlcorpFileBundle] Checking assets installation (dev + CLI only)...\n";
+        }
+
+        // Проверяем наличие package.json
+        if (!file_exists($packageJsonPath)) {
+            if ($debug) {
+                echo "  [SlcorpFileBundle] package.json not found, skipping asset installation.\n";
+            }
+
+            return;
+        }
+
+        if ($debug) {
+            echo "  [SlcorpFileBundle] Building assets...\n";
+        }
+
+        // Проверяем наличие npm
+        $npmPath = $this->findNpm();
+        if ($npmPath === null) {
+            if ($debug) {
+                echo "  [SlcorpFileBundle] WARNING: npm is not installed.\n";
+                echo "  [SlcorpFileBundle] Please install npm and run: cd {$bundlePath} && npm run install-assets\n";
+            }
+            if ($container->getParameter('kernel.debug')) {
+                trigger_error(
+                    'npm is not installed. Please install npm and run: cd ' . $bundlePath . ' && npm run install-assets',
+                    \E_USER_WARNING
+                );
+            }
+
+            return;
+        }
+
+        if ($debug) {
+            echo "  [SlcorpFileBundle] Found npm at: {$npmPath}\n";
+            echo "  [SlcorpFileBundle] Installing npm dependencies...\n";
+        }
+
+        $originalDir = getcwd();
+        if (!$originalDir) {
+            return;
+        }
+        chdir($bundlePath);
+
+        try {
+            // Устанавливаем зависимости
+            $output = [];
+            $returnCode = 0;
+            exec($npmPath . ' install 2>&1', $output, $returnCode);
+
+            if ($returnCode !== 0) {
+                if ($debug) {
+                    echo "  [SlcorpFileBundle] ERROR: npm install failed:\n";
+                    foreach ($output as $line) {
+                        echo "    {$line}\n";
+                    }
+                }
+                if ($container->getParameter('kernel.debug')) {
+                    trigger_error('npm install failed: ' . implode("\n", $output), \E_USER_WARNING);
+                }
+
+                return;
+            }
+
+            if ($debug) {
+                echo "  [SlcorpFileBundle] npm dependencies installed successfully.\n";
+                echo "  [SlcorpFileBundle] Building assets (copying vendor files, JS and compiling SCSS)...\n";
+            }
+
+            // Собираем ассеты (копируем vendor файлы, JS и компилируем SCSS)
+            $output2 = [];
+            $returnCode2 = 0;
+            exec($npmPath . ' run build 2>&1', $output2, $returnCode2);
+
+            if ($returnCode2 !== 0) {
+                if ($debug) {
+                    echo "  [SlcorpFileBundle] ERROR: npm build failed:\n";
+                    foreach ($output2 as $line) {
+                        echo "    {$line}\n";
+                    }
+                }
+                if ($container->getParameter('kernel.debug')) {
+                    trigger_error('npm build failed: ' . implode("\n", $output2), \E_USER_WARNING);
+                }
+
+                return;
+            }
+
+            if ($debug) {
+                echo "  [SlcorpFileBundle] Assets built and copied successfully.\n";
+                echo "  [SlcorpFileBundle] Asset installation completed!\n";
+            }
+        } finally {
+            chdir($originalDir);
+        }
+    }
+
+    /**
+     * Находит путь к npm.
+     */
+    private function findNpm(): ?string
+    {
+        // Проверяем стандартные пути
+        $commands = ['npm', 'npm.cmd'];
+        foreach ($commands as $cmd) {
+            $output = [];
+            $returnCode = 0;
+            exec('which ' . escapeshellarg($cmd) . ' 2>&1', $output, $returnCode);
+            if ($returnCode === 0 && !empty($output)) {
+                return mb_trim($output[0]);
+            }
+
+            // Для Windows
+            exec('where ' . escapeshellarg($cmd) . ' 2>&1', $output, $returnCode);
+            if ($returnCode === 0 && !empty($output)) {
+                return mb_trim($output[0]);
+            }
+        }
+
+        return null;
     }
 
     /**

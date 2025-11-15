@@ -1,4 +1,4 @@
-{# Plupload Widget - используем встроенные возможности библиотеки #}
+{# Plupload Widget #}
 <div id="plupload-{{ field_id }}" class="slcorp-file-uploader plupload-wrapper">
     <div id="plupload-container-{{ field_id }}" class="plupload-buttons"></div>
     <div id="plupload-filelist-{{ field_id }}" class="plupload_filelist"></div>
@@ -9,7 +9,7 @@
     <div class="error-modal-overlay"></div>
     <div class="error-modal-content">
         <div class="error-modal-header">
-            <h3>Ошибка</h3>
+            <h3>{{ 'slcorp_file.plupload.error'|trans }}</h3>
             <button type="button" class="error-modal-close">&times;</button>
         </div>
         <div class="error-modal-body">
@@ -17,7 +17,7 @@
             <p class="error-message"></p>
         </div>
         <div class="error-modal-footer">
-            <button type="button" class="error-modal-ok">ОК</button>
+            <button type="button" class="error-modal-ok">{{ 'slcorp_file.plupload.ok'|trans }}</button>
         </div>
     </div>
 </div>
@@ -29,572 +29,87 @@
 {# Подключение jQuery (если еще не подключен) #}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-{# Подключение Plupload библиотеки #}
-<script src="https://cdn.jsdelivr.net/npm/plupload@2.3.9/js/plupload.full.min.js"></script>
+{# Подключение Plupload библиотеки из бандла #}
+<script src="{{ asset('bundles/slcorpfile/vendor/plupload/plupload.full.min.js') }}"></script>
 
-<style>
-    /* Стили для Plupload */
-    #plupload-{{ field_id }}.plupload-wrapper {
-        font-family: Arial, sans-serif;
-    }
+{# Подключение стилей #}
+<link href="{{ asset('bundles/slcorpfile/css/plupload-widget.css') }}" rel="stylesheet">
 
-    #plupload-{{ field_id }} .plupload-buttons {
-        margin-bottom: 20px;
-    }
+{# Подключение JavaScript #}
+<script src="{{ asset('bundles/slcorpfile/js/plupload-widget.js') }}"></script>
 
-    #plupload-{{ field_id }} .plupload_button {
-        padding: 10px 20px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-
-    #plupload-{{ field_id }} .plupload_button:hover {
-        background: #0056b3;
-    }
-
-    #plupload-{{ field_id }} .plupload_filelist {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    #plupload-{{ field_id }} .plupload_file {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        margin-bottom: 10px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    #plupload-{{ field_id }} .plupload_file_content {
-        display: flex;
-        align-items: center;
-        flex: 1;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_preview {
-        width: 80px;
-        height: 80px;
-        margin-right: 15px;
-        border-radius: 4px;
-        overflow: hidden;
-        background: #f0f0f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_preview img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_name {
-        font-weight: 500;
-        margin-bottom: 5px;
-        word-break: break-word;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_size {
-        color: #666;
-        font-size: 14px;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_progress {
-        width: 100%;
-        height: 6px;
-        background: #f0f0f0;
-        border-radius: 3px;
-        overflow: hidden;
-        margin-top: 10px;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_progress_bar {
-        height: 100%;
-        background: #007bff;
-        transition: width 0.3s;
-        border-radius: 3px;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_action {
-        padding: 8px 16px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background 0.2s;
-        margin-left: 15px;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_action:hover {
-        background: #c82333;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_status {
-        margin-left: 15px;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_status.uploading {
-        background: #fff3cd;
-        color: #856404;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_status.success {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    #plupload-{{ field_id }} .plupload_file_status.error {
-        background: #f8d7da;
-        color: #721c24;
-    }
-
-    /* Стили для модального окна ошибок */
-    #error-modal-{{ field_id }} {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(2px);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-content {
-        position: relative;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        max-width: 500px;
-        width: 90%;
-        animation: modalSlideIn 0.3s ease-out;
-    }
-
-    @keyframes modalSlideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-50px) scale(0.9);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-
-    #error-modal-{{ field_id }} .error-modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 24px;
-        border-bottom: 1px solid #e9ecef;
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-header h3 {
-        margin: 0;
-        color: white;
-        font-size: 20px;
-        font-weight: 600;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 28px;
-        line-height: 1;
-        cursor: pointer;
-        padding: 0;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: background 0.2s;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-close:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-body {
-        padding: 30px 24px;
-        text-align: center;
-    }
-
-    #error-modal-{{ field_id }} .error-icon {
-        font-size: 64px;
-        margin-bottom: 20px;
-    }
-
-    #error-modal-{{ field_id }} .error-message {
-        margin: 0;
-        font-size: 16px;
-        line-height: 1.6;
-        color: #333;
-        word-wrap: break-word;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-footer {
-        padding: 20px 24px;
-        border-top: 1px solid #e9ecef;
-        text-align: right;
-        background: #f8f9fa;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-ok {
-        padding: 10px 24px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-ok:hover {
-        background: #c82333;
-        transform: translateY(-1px);
-    }
-</style>
-
+{# Инициализация виджета #}
 <script>
     (function () {
         'use strict';
 
-        // Ждем загрузки DOM и библиотеки Plupload
-        function initPlupload() {
+        // Получаем переводы
+        var translations = {
+            select_file: {{ 'slcorp_file.plupload.select_file'|trans|json_encode|raw }},
+            select_files: {{ 'slcorp_file.plupload.select_files'|trans|json_encode|raw }},
+            delete: {{ 'slcorp_file.plupload.delete'|trans|json_encode|raw }},
+            error: {{ 'slcorp_file.plupload.error'|trans|json_encode|raw }},
+            ok: {{ 'slcorp_file.plupload.ok'|trans|json_encode|raw }},
+            uploading: {{ 'slcorp_file.plupload.uploading'|trans|json_encode|raw }},
+            max_files_exceeded: {{ 'slcorp_file.plupload.max_files_exceeded'|trans|json_encode|raw }},
+            file_too_big: {{ 'slcorp_file.plupload.file_too_big'|trans|json_encode|raw }},
+            file_type_not_allowed: {{ 'slcorp_file.plupload.file_type_not_allowed'|trans|json_encode|raw }},
+            upload_error: {{ 'slcorp_file.plupload.upload_error'|trans|json_encode|raw }},
+            delete_confirmation: {{ 'slcorp_file.plupload.delete_confirmation'|trans|json_encode|raw }},
+            allowed_files: {{ 'slcorp_file.plupload.allowed_files'|trans|json_encode|raw }}
+        };
+
+        // Конфигурация для инициализации
+        var widgetConfig = {
+            containerId: 'plupload-{{ field_id }}',
+            buttonContainerId: 'plupload-container-{{ field_id }}',
+            fileListId: 'plupload-filelist-{{ field_id }}',
+            hiddenFieldId: '{{ field_id }}',
+            uploadUrl: '{{ upload_url }}',
+            fieldName: '{{ field_name }}',
+            maxFiles: {{ form.vars.attr['data-max-files']|default(1) }},
+            maxFileSize: {{ form.vars.attr['data-max-size']|default(5242880) }},
+            allowedExtensions: {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}'{{ form.vars.attr['data-allowed-extensions'] }}'
+            {% else %}null{% endif %},
+            params: {
+                component: '{{ component }}',
+                filearea: '{{ filearea }}',
+                itemid: {{ itemid }},
+                contextid: {{ contextid }},
+                userid: {{ userid|default('null') }}
+            },
+            fileData: {{ file_data|json_encode|raw }},
+            translations: translations
+        };
+
+        // Функция инициализации виджета
+        function initPluploadWidget() {
+            // Проверяем, что Plupload загружен
             if (typeof plupload === 'undefined') {
-                setTimeout(initPlupload, 100);
+                setTimeout(initPluploadWidget, 100);
                 return;
             }
 
-            var $hiddenField = $('#{{ field_id }}');
-            var maxFiles = {{ form.vars.attr['data-max-files']|default(1) }};
-            var maxFileSize = {{ form.vars.attr['data-max-size']|default(5242880) }};
-            var fileData = {{ file_data|json_encode|raw }};
-            var uploadedFiles = [];
+            // Проверяем, что наш виджет загружен
+            if (typeof window.SlcorpFileBundle === 'undefined' || typeof window.SlcorpFileBundle.PluploadWidget !== 'function') {
+                console.error('[SlcorpFileBundle] SlcorpFileBundle.PluploadWidget is not loaded');
+                return;
+            }
 
-            // Нормализуем скрытое поле
-            var currentValue = $hiddenField.val() || '[]';
+            // Инициализируем виджет
             try {
-                var parsed = JSON.parse(currentValue);
-                $hiddenField.val(Array.isArray(parsed) ? JSON.stringify(parsed) : JSON.stringify(parsed ? [parsed] : []));
+                window.SlcorpFileBundle.PluploadWidget(widgetConfig);
             } catch (e) {
-                $hiddenField.val(currentValue && currentValue !== '[]' ? JSON.stringify([currentValue]) : '[]');
+                console.error('[SlcorpFileBundle] Error initializing Plupload widget:', e);
             }
+        }
 
-            // Обновление скрытого поля
-            function updateHiddenField() {
-                var draftItemIds = uploadedFiles.map(function (file) {
-                    return file.draftitemid;
-                });
-                $hiddenField.val(JSON.stringify(draftItemIds));
-            }
-
-            // Модальное окно для ошибок
-            function showErrorModal(message) {
-                var $modal = $('#error-modal-{{ field_id }}');
-                $modal.find('.error-message').text(message);
-                $modal.fadeIn(200);
-            }
-
-            function hideErrorModal() {
-                $('#error-modal-{{ field_id }}').fadeOut(200);
-            }
-
-            $('#error-modal-{{ field_id }} .error-modal-close, #error-modal-{{ field_id }} .error-modal-ok, #error-modal-{{ field_id }} .error-modal-overlay').on('click', hideErrorModal);
-            $('#error-modal-{{ field_id }} .error-modal-content').on('click', function (e) {
-                e.stopPropagation();
-            });
-
-            // Подготовка разрешенных MIME типов для Plupload
-            var allowedMimeTypes = [];
-            {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}
-            allowedMimeTypes = '{{ form.vars.attr['data-allowed-extensions'] }}'.split(',').map(function (type) {
-                return type.trim();
-            }).filter(function (type) {
-                return type.length > 0;
-            });
-            {% endif %}
-
-            // Преобразуем MIME типы в формат для Plupload
-            var mimeTypes = [];
-            if (allowedMimeTypes.length > 0) {
-                mimeTypes = [{
-                    title: "Разрешенные файлы",
-                    extensions: allowedMimeTypes.map(function (mime) {
-                        // Извлекаем расширение из MIME типа (например, image/jpeg -> jpeg)
-                        var parts = mime.split('/');
-                        if (parts.length === 2) {
-                            var ext = parts[1];
-                            // Специальные случаи
-                            if (ext === 'jpeg') ext = 'jpg,jpeg';
-                            return ext;
-                        }
-                        return '';
-                    }).filter(function (ext) {
-                        return ext.length > 0;
-                    }).join(',')
-                }];
-            }
-
-            // Инициализация Plupload - используем встроенные возможности библиотеки
-            var uploaderConfig = {
-                browse_button: 'plupload-container-{{ field_id }}',
-                url: '{{ upload_url }}',
-                chunk_size: '1mb',
-                max_file_size: (maxFileSize / 1048576) + 'mb',
-                filters: {
-                    max_file_size: (maxFileSize / 1048576) + 'mb',
-                    prevent_duplicates: true
-                },
-                multipart_params: {
-                    component: '{{ component }}',
-                    filearea: '{{ filearea }}',
-                    itemid: {{ itemid }},
-                    contextid: {{ contextid }}
-                    {% if userid is not null %},
-                    userid: {{ userid }}
-                    {% endif %}
-                },
-                init: {
-                    PostInit: function () {
-                        // После инициализации - создаем кнопку выбора файлов
-                        var maxFilesValue = {{ form.vars.attr['data-max-files']|default(1) }};
-                        document.getElementById('plupload-container-{{ field_id }}').innerHTML =
-                            '<button type="button" class="plupload_button">Выбрать файл' + (maxFilesValue > 1 ? 'ы' : '') + '</button>';
-                    },
-                    FilesAdded: function (up, files) {
-                        // Если maxFiles = 1, удаляем предыдущий файл
-                        if (maxFiles === 1 && uploadedFiles.length >= 1) {
-                            var fileList = document.getElementById('plupload-filelist-{{ field_id }}');
-                            fileList.innerHTML = '';
-                            uploadedFiles = [];
-                            updateHiddenField();
-                            // Удаляем все файлы из очереди Plupload
-                            up.files = [];
-                        }
-
-                        // Проверяем максимальное количество файлов
-                        if (uploadedFiles.length + files.length > maxFiles) {
-                            showErrorModal('Максимальное количество файлов: ' + maxFiles);
-                            up.removeFile(files[files.length - 1]);
-                            return;
-                        }
-
-                        // Создаем элементы для отображения файлов с прогресс-баром
-                        var fileList = document.getElementById('plupload-filelist-{{ field_id }}');
-                        plupload.each(files, function (file) {
-                            var fileItem = document.createElement('div');
-                            fileItem.id = file.id;
-                            fileItem.className = 'plupload_file';
-                            var isImage = file.type && file.type.startsWith('image/');
-                            fileItem.innerHTML =
-                                '<div class="plupload_file_content">' +
-                                '<div class="plupload_file_preview">' +
-                                (isImage ? '<img src="" alt="' + file.name + '">' : '<span style="font-size: 40px; color: #ccc;">📄</span>') +
-                                '</div>' +
-                                '<div class="plupload_file_info">' +
-                                '<div class="plupload_file_name">' + file.name + '</div>' +
-                                '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
-                                '<div class="plupload_file_progress"><div class="plupload_file_progress_bar" style="width: 0%"></div></div>' +
-                                '</div>' +
-                                '<span class="plupload_file_status uploading">Загрузка...</span>' +
-                                '</div>';
-                            fileList.appendChild(fileItem);
-
-                            // Превью для изображений
-                            if (isImage) {
-                                var reader = new FileReader();
-                                reader.onload = function (e) {
-                                    var img = fileItem.querySelector('.plupload_file_preview img');
-                                    if (img) img.src = e.target.result;
-                                };
-                                reader.readAsDataURL(file.getNative());
-                            }
-                        });
-
-                        // Начинаем загрузку автоматически
-                        up.start();
-                    },
-                    UploadProgress: function (up, file) {
-                        // Обновление прогресс-бара
-                        var fileItem = document.getElementById(file.id);
-                        if (fileItem) {
-                            var progress = file.percent;
-                            var progressBar = fileItem.querySelector('.plupload_file_progress_bar');
-                            if (progressBar) {
-                                progressBar.style.width = progress + '%';
-                            }
-                        }
-                    },
-                    FileUploaded: function (up, file, response) {
-                        // Обработка успешной загрузки
-                        var fileItem = document.getElementById(file.id);
-                        if (!fileItem) return;
-
-                        try {
-                            var result = JSON.parse(response.response);
-                            if (result.result && result.result.draftitemid) {
-                                // Обновляем элемент файла - убираем прогресс, добавляем превью и кнопку удаления
-                                var isImage = result.result.url && file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-                                var previewHtml = '';
-                                if (isImage && result.result.url) {
-                                    previewHtml = '<img src="' + result.result.url + '" alt="' + result.result.name + '">';
-                                } else {
-                                    previewHtml = '<span style="font-size: 40px; color: #ccc;">📄</span>';
-                                }
-
-                                fileItem.setAttribute('data-draftitemid', result.result.draftitemid);
-                                fileItem.innerHTML =
-                                    '<div class="plupload_file_content">' +
-                                    '<div class="plupload_file_preview">' + previewHtml + '</div>' +
-                                    '<div class="plupload_file_info">' +
-                                    '<div class="plupload_file_name">' + result.result.name + '</div>' +
-                                    '<div class="plupload_file_size">' + plupload.formatSize(result.result.size) + '</div>' +
-                                    '</div>' +
-                                    '<button type="button" class="plupload_file_action delete" data-draftitemid="' + result.result.draftitemid + '">Удалить</button>' +
-                                    '</div>';
-
-                                uploadedFiles.push({
-                                    draftitemid: result.result.draftitemid,
-                                    filename: result.result.name
-                                });
-                                updateHiddenField();
-                            }
-                        } catch (e) {
-                            console.error('Ошибка парсинга ответа', e);
-                            fileItem.remove();
-                        }
-                    },
-                    Error: function (up, err) {
-                        // Обработка ошибок - используем красивое модальное окно
-                        var errorMessage = err.message || 'Ошибка загрузки файла';
-                        if (err.code === plupload.FILE_SIZE_ERROR) {
-                            errorMessage = 'Файл слишком большой. Максимальный размер: ' + (maxFileSize / 1048576).toFixed(2) + ' МБ';
-                        } else if (err.code === plupload.FILE_EXTENSION_ERROR) {
-                            errorMessage = 'Тип файла не разрешен';
-                        } else if (err.response) {
-                            try {
-                                var errorResponse = JSON.parse(err.response);
-                                if (errorResponse.error && errorResponse.error.message) {
-                                    errorMessage = errorResponse.error.message;
-                                }
-                            } catch (e) {
-                                // Используем стандартное сообщение
-                            }
-                        }
-
-                        // Удаляем элемент файла при ошибке
-                        if (err.file && err.file.id) {
-                            var fileItem = document.getElementById(err.file.id);
-                            if (fileItem) {
-                                fileItem.remove();
-                            }
-                        }
-
-                        showErrorModal(errorMessage);
-                    }
-                }
-            };
-
-            // Добавляем mime_types в filters если есть разрешенные типы
-            if (mimeTypes.length > 0) {
-                uploaderConfig.filters.mime_types = mimeTypes;
-            }
-
-            var uploader = new plupload.Uploader(uploaderConfig);
-            uploader.init();
-
-            // Загружаем существующие файлы
-            if (fileData && Array.isArray(fileData) && fileData.length > 0) {
-                var fileList = document.getElementById('plupload-filelist-{{ field_id }}');
-                fileData.forEach(function (file) {
-                    var fileItem = document.createElement('div');
-                    fileItem.className = 'plupload_file';
-                    fileItem.setAttribute('data-draftitemid', file.draftitemid);
-                    var isImage = file.mimetype && file.mimetype.startsWith('image/');
-                    var previewHtml = '';
-                    if (isImage && file.download_url) {
-                        previewHtml = '<img src="' + file.download_url + '" alt="' + file.filename + '">';
-                    } else {
-                        previewHtml = '<span style="font-size: 40px; color: #ccc;">📄</span>';
-                    }
-
-                    fileItem.innerHTML =
-                        '<div class="plupload_file_content">' +
-                        '<div class="plupload_file_preview">' + previewHtml + '</div>' +
-                        '<div class="plupload_file_info">' +
-                        '<div class="plupload_file_name">' + file.filename + '</div>' +
-                        '<div class="plupload_file_size">' + (file.filesize / 1024).toFixed(2) + ' KB</div>' +
-                        '</div>' +
-                        '<button type="button" class="plupload_file_action delete" data-draftitemid="' + file.draftitemid + '">Удалить</button>' +
-                        '</div>';
-                    fileList.appendChild(fileItem);
-
-                    uploadedFiles.push({
-                        draftitemid: file.draftitemid,
-                        filename: file.filename
-                    });
-                });
-                updateHiddenField();
-            }
-
-            // Обработчик удаления файла
-            $(document).on('click', '#plupload-filelist-{{ field_id }} .delete', function () {
-                var draftitemid = $(this).data('draftitemid');
-                if (confirm('Вы уверены, что хотите удалить этот файл?')) {
-                    uploadedFiles = uploadedFiles.filter(function (file) {
-                        return file.draftitemid !== draftitemid;
-                    });
-                    updateHiddenField();
-                    $(this).closest('.plupload_file').remove();
-                }
-            });
-        } // конец функции initPlupload
-
-        // Запускаем инициализацию
+        // Инициализируем после загрузки DOM
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initPlupload);
+            document.addEventListener('DOMContentLoaded', initPluploadWidget);
         } else {
-            initPlupload();
+            // DOM уже загружен, инициализируем сразу
+            initPluploadWidget();
         }
     })();
 </script>
-

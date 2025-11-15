@@ -1,0 +1,17 @@
+/**
+ * Dropzone Widget Styles
+ *
+ * @copyright  2024 Zhalayletdinov Vyacheslav evil_tut@mail.ru
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+.slcorp-file-uploader.dropzone .dz-image {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.slcorp-file-uploader.dropzone .dz-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #f8f9fa;
+}

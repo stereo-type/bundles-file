@@ -1,0 +1,37 @@
+{
+  "name": "@slcorp/file-bundle",
+  "version": "1.0.0",
+  "description": "A clean architecture File bundle for Symfony",
+  "scripts": {
+    "install-assets": "npm install && npm run build",
+    "build": "npm run copy-vendor && npm run build-js && npm run build-scss",
+    "copy-vendor": "npm run copy-vendor-dropzone && npm run copy-vendor-jquery-file-upload && npm run copy-vendor-bluimp && npm run copy-vendor-plupload && npm run copy-vendor-fine-uploader",
+    "copy-vendor-dropzone": "mkdir -p src/Resources/public/vendor/dropzone && cp node_modules/dropzone/dist/dropzone-min.js src/Resources/public/vendor/dropzone/dropzone.min.js && cp node_modules/dropzone/dist/dropzone.css src/Resources/public/vendor/dropzone/dropzone.css",
+    "copy-vendor-jquery-file-upload": "mkdir -p src/Resources/public/vendor/img && cp node_modules/blueimp-file-upload/js/vendor/jquery.ui.widget.js src/Resources/public/vendor/jquery-file-upload/jquery.ui.widget.js && cp node_modules/blueimp-file-upload/js/jquery.iframe-transport.js src/Resources/public/vendor/jquery-file-upload/jquery.iframe-transport.js && cp node_modules/blueimp-file-upload/js/jquery.fileupload.js src/Resources/public/vendor/jquery-file-upload/jquery.fileupload.js && cp node_modules/blueimp-file-upload/js/jquery.fileupload-process.js src/Resources/public/vendor/jquery-file-upload/jquery.fileupload-process.js && cp node_modules/blueimp-file-upload/js/jquery.fileupload-validate.js src/Resources/public/vendor/jquery-file-upload/jquery.fileupload-validate.js && cp node_modules/blueimp-file-upload/js/jquery.fileupload-ui.js src/Resources/public/vendor/jquery-file-upload/jquery.fileupload-ui.js && cp node_modules/blueimp-file-upload/css/jquery.fileupload.css src/Resources/public/vendor/jquery-file-upload/jquery.fileupload.css && cp node_modules/blueimp-file-upload/css/jquery.fileupload-ui.css src/Resources/public/vendor/jquery-file-upload/jquery.fileupload-ui.css && cp node_modules/blueimp-file-upload/img/progressbar.gif src/Resources/public/vendor/img/progressbar.gif && cp node_modules/blueimp-file-upload/img/loading.gif src/Resources/public/vendor/img/loading.gif",
+    "copy-vendor-plupload": "mkdir -p src/Resources/public/vendor/plupload && cp node_modules/plupload/js/plupload.full.min.js src/Resources/public/vendor/plupload/plupload.full.min.js",
+    "copy-vendor-bluimp": "npm run copy-vendor-jquery-file-upload",
+    "copy-vendor-fine-uploader": "mkdir -p src/Resources/public/vendor/fine-uploader && cp node_modules/fine-uploader/fine-uploader/fine-uploader.min.js src/Resources/public/vendor/fine-uploader/fine-uploader.min.js && cp node_modules/fine-uploader/fine-uploader/fine-uploader.min.css src/Resources/public/vendor/fine-uploader/fine-uploader.min.css && cp node_modules/fine-uploader/fine-uploader/loading.gif src/Resources/public/vendor/fine-uploader/loading.gif && cp node_modules/fine-uploader/fine-uploader/processing.gif src/Resources/public/vendor/fine-uploader/processing.gif && cp node_modules/fine-uploader/fine-uploader/edit.gif src/Resources/public/vendor/fine-uploader/edit.gif",
+    "build-js": "npm run build-js-dropzone && npm run build-js-jquery-file-upload && npm run build-js-bluimp && npm run build-js-plupload && npm run build-js-fine-uploader",
+    "build-js-dropzone": "mkdir -p src/Resources/public/js && cp assets/js/dropzone-widget.js src/Resources/public/js/dropzone-widget.js && cp assets/js/dropzone.d.ts src/Resources/public/js/dropzone.d.ts",
+    "build-js-jquery-file-upload": "mkdir -p src/Resources/public/js && cp assets/js/jquery-file-upload-widget.js src/Resources/public/js/jquery-file-upload-widget.js && cp assets/js/jquery-file-upload.d.ts src/Resources/public/js/jquery-file-upload.d.ts",
+    "build-js-bluimp": "mkdir -p src/Resources/public/js && cp assets/js/bluimp-widget.js src/Resources/public/js/bluimp-widget.js && cp assets/js/jquery-file-upload.d.ts src/Resources/public/js/bluimp.d.ts",
+    "build-js-plupload": "mkdir -p src/Resources/public/js && cp assets/js/plupload-widget.js src/Resources/public/js/plupload-widget.js && cp assets/js/plupload.d.ts src/Resources/public/js/plupload.d.ts",
+    "build-js-fine-uploader": "mkdir -p src/Resources/public/js && cp assets/js/fine-uploader-widget.js src/Resources/public/js/fine-uploader-widget.js && cp assets/js/fine-uploader.d.ts src/Resources/public/js/fine-uploader.d.ts",
+    "build-scss": "npm run build-scss-dropzone && npm run build-scss-jquery-file-upload && npm run build-scss-bluimp && npm run build-scss-plupload && npm run build-scss-fine-uploader",
+    "build-scss-dropzone": "mkdir -p src/Resources/public/css && sass assets/scss/dropzone-widget.scss:src/Resources/public/css/dropzone-widget.css --no-source-map",
+    "build-scss-jquery-file-upload": "mkdir -p src/Resources/public/css && sass assets/scss/jquery-file-upload-widget.scss:src/Resources/public/css/jquery-file-upload-widget.css --no-source-map",
+    "build-scss-bluimp": "mkdir -p src/Resources/public/css && sass assets/scss/bluimp-widget.scss:src/Resources/public/css/bluimp-widget.css --no-source-map",
+    "build-scss-plupload": "mkdir -p src/Resources/public/css && sass assets/scss/plupload-widget.scss:src/Resources/public/css/plupload-widget.css --no-source-map",
+    "build-scss-fine-uploader": "mkdir -p src/Resources/public/css && sass assets/scss/fine-uploader-widget.scss:src/Resources/public/css/fine-uploader-widget.css --no-source-map"
+  },
+  "dependencies": {
+    "dropzone": "^6.0.0-beta.2",
+    "blueimp-file-upload": "^10.32.0",
+    "plupload": "^2.3.9",
+    "fine-uploader": "^5.16.2"
+  },
+  "devDependencies": {
+    "sass": "^1.80.0"
+  }
+}
+

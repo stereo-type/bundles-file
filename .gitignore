@@ -9,6 +9,7 @@
 /config/reference.php
 /var/
 /vendor/
+/node_modules/
 ###< symfony/framework-bundle ###
 ./composer.lock
 ###> phpunit/phpunit ###
@@ -29,3 +30,4 @@
 ###> phpstan/phpstan ###
 phpstan.neon
 ###< phpstan/phpstan ###
+/package-lock.json

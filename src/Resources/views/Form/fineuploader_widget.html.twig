@@ -1,4 +1,4 @@
-{# Fine Uploader Widget - используем встроенные возможности библиотеки #}
+{# Fine Uploader Widget #}
 <div id="fineuploader-{{ field_id }}" class="slcorp-file-uploader fineuploader-wrapper"></div>
 
 {# Модальное окно для ошибок #}
@@ -6,7 +6,7 @@
     <div class="error-modal-overlay"></div>
     <div class="error-modal-content">
         <div class="error-modal-header">
-            <h3>Ошибка</h3>
+            <h3>{{ 'slcorp_file.fine_uploader.error'|trans }}</h3>
             <button type="button" class="error-modal-close">&times;</button>
         </div>
         <div class="error-modal-body">
@@ -14,7 +14,7 @@
             <p class="error-message"></p>
         </div>
         <div class="error-modal-footer">
-            <button type="button" class="error-modal-ok">ОК</button>
+            <button type="button" class="error-modal-ok">{{ 'slcorp_file.fine_uploader.ok'|trans }}</button>
         </div>
     </div>
 </div>
@@ -23,459 +23,87 @@
 <input type="hidden" id="{{ field_id }}" name="{{ field_name }}"
        value="{% if file_data %}{{ file_data|map(f => f.draftitemid)|json_encode|raw }}{% else %}{{ value|default('[]') }}{% endif %}"/>
 
-{# Подключение Fine Uploader библиотеки #}
-<link href="https://cdn.jsdelivr.net/npm/fine-uploader@5.16.2/fine-uploader.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/fine-uploader@5.16.2/fine-uploader.min.js"></script>
+{# Подключение Fine Uploader библиотеки из бандла #}
+<link href="{{ asset('bundles/slcorpfile/vendor/fine-uploader/fine-uploader.min.css') }}" rel="stylesheet">
+<script src="{{ asset('bundles/slcorpfile/vendor/fine-uploader/fine-uploader.min.js') }}"></script>
 
-<style>
-    /* Стили для Fine Uploader */
-    #fineuploader-{{ field_id }}.fineuploader-wrapper {
-        font-family: Arial, sans-serif;
-    }
+{# Подключение стилей #}
+<link href="{{ asset('bundles/slcorpfile/css/fine-uploader-widget.css') }}" rel="stylesheet">
 
-    #fineuploader-{{ field_id }} .qq-uploader {
-        min-height: 200px;
-    }
+{# Подключение JavaScript #}
+<script src="{{ asset('bundles/slcorpfile/js/fine-uploader-widget.js') }}"></script>
 
-    #fineuploader-{{ field_id }} .qq-upload-button {
-        display: inline-block;
-        padding: 10px 20px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background 0.2s;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-button:hover {
-        background: #0056b3;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list {
-        list-style: none;
-        padding: 0;
-        margin: 20px 0 0 0;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list li {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        margin-bottom: 10px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-thumbnail-wrapper {
-        width: 80px;
-        height: 80px;
-        margin-right: 15px;
-        border-radius: 4px;
-        overflow: hidden;
-        background: #f0f0f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-thumbnail-wrapper img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-file-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-file-name {
-        font-weight: 500;
-        margin-bottom: 5px;
-        word-break: break-word;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-file-size {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-progress-bar {
-        width: 100%;
-        height: 6px;
-        background: #f0f0f0;
-        border-radius: 3px;
-        overflow: hidden;
-        margin-bottom: 10px;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-progress-bar .qq-progress-bar-container {
-        height: 100%;
-        background: #007bff;
-        transition: width 0.3s;
-        border-radius: 3px;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-status-text {
-        margin-left: 15px;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-status-text.qq-upload-status-uploading {
-        background: #fff3cd;
-        color: #856404;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-status-text.qq-upload-status-success {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-status-text.qq-upload-status-error {
-        background: #f8d7da;
-        color: #721c24;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-delete,
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-cancel {
-        padding: 8px 16px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background 0.2s;
-        margin-left: 15px;
-    }
-
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-delete:hover,
-    #fineuploader-{{ field_id }} .qq-upload-list .qq-upload-cancel:hover {
-        background: #c82333;
-    }
-
-    /* Стили для модального окна ошибок */
-    #error-modal-{{ field_id }} {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(2px);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-content {
-        position: relative;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        max-width: 500px;
-        width: 90%;
-        animation: modalSlideIn 0.3s ease-out;
-    }
-
-    @keyframes modalSlideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-50px) scale(0.9);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-
-    #error-modal-{{ field_id }} .error-modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 24px;
-        border-bottom: 1px solid #e9ecef;
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-header h3 {
-        margin: 0;
-        color: white;
-        font-size: 20px;
-        font-weight: 600;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 28px;
-        line-height: 1;
-        cursor: pointer;
-        padding: 0;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: background 0.2s;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-close:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-body {
-        padding: 30px 24px;
-        text-align: center;
-    }
-
-    #error-modal-{{ field_id }} .error-icon {
-        font-size: 64px;
-        margin-bottom: 20px;
-    }
-
-    #error-modal-{{ field_id }} .error-message {
-        margin: 0;
-        font-size: 16px;
-        line-height: 1.6;
-        color: #333;
-        word-wrap: break-word;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-footer {
-        padding: 20px 24px;
-        border-top: 1px solid #e9ecef;
-        text-align: right;
-        background: #f8f9fa;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-ok {
-        padding: 10px 24px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-ok:hover {
-        background: #c82333;
-        transform: translateY(-1px);
-    }
-</style>
-
+{# Инициализация виджета #}
 <script>
     (function () {
         'use strict';
 
-        var $hiddenField = $('#{{ field_id }}');
-        var maxFiles = {{ form.vars.attr['data-max-files']|default(1) }};
-        var maxFileSize = {{ form.vars.attr['data-max-size']|default(5242880) }};
-        var fileData = {{ file_data|json_encode|raw }};
-        var uploadedFiles = [];
+        // Получаем переводы
+        var translations = {
+            select_file: {{ 'slcorp_file.fine_uploader.select_file'|trans|json_encode|raw }},
+            select_files: {{ 'slcorp_file.fine_uploader.select_files'|trans|json_encode|raw }},
+            delete: {{ 'slcorp_file.fine_uploader.delete'|trans|json_encode|raw }},
+            error: {{ 'slcorp_file.fine_uploader.error'|trans|json_encode|raw }},
+            ok: {{ 'slcorp_file.fine_uploader.ok'|trans|json_encode|raw }},
+            uploaded: {{ 'slcorp_file.fine_uploader.uploaded'|trans|json_encode|raw }},
+            max_files_exceeded: {{ 'slcorp_file.fine_uploader.max_files_exceeded'|trans|json_encode|raw }},
+            file_too_big: {{ 'slcorp_file.fine_uploader.file_too_big'|trans|json_encode|raw }},
+            file_type_not_allowed: {{ 'slcorp_file.fine_uploader.file_type_not_allowed'|trans|json_encode|raw }},
+            upload_error: {{ 'slcorp_file.fine_uploader.upload_error'|trans|json_encode|raw }},
+            delete_confirmation: {{ 'slcorp_file.fine_uploader.delete_confirmation'|trans|json_encode|raw }}
+        };
 
-        // Нормализуем скрытое поле
-        var currentValue = $hiddenField.val() || '[]';
-        try {
-            var parsed = JSON.parse(currentValue);
-            $hiddenField.val(Array.isArray(parsed) ? JSON.stringify(parsed) : JSON.stringify(parsed ? [parsed] : []));
-        } catch (e) {
-            $hiddenField.val(currentValue && currentValue !== '[]' ? JSON.stringify([currentValue]) : '[]');
-        }
-
-        // Обновление скрытого поля
-        function updateHiddenField() {
-            var draftItemIds = uploadedFiles.map(function (file) {
-                return file.draftitemid;
-            });
-            $hiddenField.val(JSON.stringify(draftItemIds));
-        }
-
-        // Модальное окно для ошибок
-        function showErrorModal(message) {
-            var $modal = $('#error-modal-{{ field_id }}');
-            $modal.find('.error-message').text(message);
-            $modal.fadeIn(200);
-        }
-
-        function hideErrorModal() {
-            $('#error-modal-{{ field_id }}').fadeOut(200);
-        }
-
-        $('#error-modal-{{ field_id }} .error-modal-close, #error-modal-{{ field_id }} .error-modal-ok, #error-modal-{{ field_id }} .error-modal-overlay').on('click', hideErrorModal);
-        $('#error-modal-{{ field_id }} .error-modal-content').on('click', function (e) {
-            e.stopPropagation();
-        });
-
-        // Подготовка разрешенных MIME типов для Fine Uploader
-        var allowedExtensions = [];
-        {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}
-        var allowedMimeTypes = '{{ form.vars.attr['data-allowed-extensions'] }}'.split(',').map(function (type) {
-            return type.trim();
-        }).filter(function (type) {
-            return type.length > 0;
-        });
-
-        // Преобразуем MIME типы в расширения
-        allowedExtensions = allowedMimeTypes.map(function (mime) {
-            var parts = mime.split('/');
-            if (parts.length === 2) {
-                var ext = parts[1];
-                if (ext === 'jpeg') return 'jpg,jpeg';
-                return ext;
-            }
-            return '';
-        }).filter(function (ext) {
-            return ext.length > 0;
-        });
-        {% endif %}
-
-        // Инициализация Fine Uploader - используем встроенные возможности библиотеки
-        var uploader = new qq.FineUploader({
-            element: document.getElementById('fineuploader-{{ field_id }}'),
-            request: {
-                endpoint: '{{ upload_url }}',
-                params: {
-                    component: '{{ component }}',
-                    filearea: '{{ filearea }}',
-                    itemid: {{ itemid }},
-                    contextid: {{ contextid }}
-                    {% if userid is not null %},
-                    userid: {{ userid }}
-                    {% endif %}
-                }
+        // Конфигурация для инициализации
+        var widgetConfig = {
+            containerId: 'fineuploader-{{ field_id }}',
+            hiddenFieldId: '{{ field_id }}',
+            uploadUrl: '{{ upload_url }}',
+            fieldName: '{{ field_name }}',
+            maxFiles: {{ form.vars.attr['data-max-files']|default(1) }},
+            maxFileSize: {{ form.vars.attr['data-max-size']|default(5242880) }},
+            allowedExtensions: {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}'{{ form.vars.attr['data-allowed-extensions'] }}'
+            {% else %}null{% endif %},
+            params: {
+                component: '{{ component }}',
+                filearea: '{{ filearea }}',
+                itemid: {{ itemid }},
+                contextid: {{ contextid }},
+                userid: {{ userid|default('null') }}
             },
-            validation: {
-                allowedExtensions: allowedExtensions.length > 0 ? allowedExtensions : null,
-                sizeLimit: maxFileSize,
-                itemLimit: maxFiles
-            },
-            multiple: maxFiles > 1,
-            // Используем встроенные обработчики Fine Uploader
-            callbacks: {
-                onSubmit: function (id, fileName) {
-                    // Если maxFiles = 1, удаляем предыдущие файлы
-                    if (maxFiles === 1 && uploadedFiles.length >= 1) {
-                        var allFiles = uploader.getUploads();
-                        allFiles.forEach(function (file) {
-                            if (file.status === qq.status.UPLOAD_SUCCESSFUL) {
-                                uploader.deleteFile(file.id);
-                            }
-                        });
-                        uploadedFiles = [];
-                        updateHiddenField();
-                    }
-                    return true;
-                },
-                onComplete: function (id, fileName, responseJSON) {
-                    // Обработка успешной загрузки
-                    if (responseJSON.success && responseJSON.draftitemid) {
-                        // Сохраняем draftitemid в элемент файла
-                        var fileItem = uploader.getItemByFileId(id);
-                        if (fileItem) {
-                            fileItem.setAttribute('data-draftitemid', responseJSON.draftitemid);
-                        }
+            fileData: {{ file_data|json_encode|raw }},
+            translations: translations
+        };
 
-                        uploadedFiles.push({
-                            draftitemid: responseJSON.draftitemid,
-                            filename: responseJSON.name || fileName
-                        });
-                        updateHiddenField();
-                    }
-                },
-                onError: function (id, name, errorReason, xhr) {
-                    // Обработка ошибок
-                    var errorMessage = errorReason || 'Ошибка загрузки файла';
-                    if (xhr && xhr.responseText) {
-                        try {
-                            var errorResponse = JSON.parse(xhr.responseText);
-                            if (errorResponse.error) {
-                                errorMessage = errorResponse.error;
-                            }
-                        } catch (e) {
-                            // Используем стандартное сообщение
-                        }
-                    }
-                    showErrorModal(errorMessage);
-                },
-                onValidate: function (data, buttonContainer) {
-                    // Валидация через встроенные возможности Fine Uploader
-                    return true;
-                },
-                onValidateBatch: function (fileOrBlobDataArray, buttonContainer) {
-                    // Проверяем максимальное количество файлов
-                    if (uploadedFiles.length + fileOrBlobDataArray.length > maxFiles) {
-                        showErrorModal('Максимальное количество файлов: ' + maxFiles);
-                        return false;
-                    }
-                    return true;
-                }
+        // Функция инициализации виджета
+        function initFineUploaderWidget() {
+            // Проверяем, что Fine Uploader загружен
+            if (typeof qq === 'undefined' || typeof qq.FineUploader === 'undefined') {
+                console.error('[SlcorpFileBundle] Fine Uploader is not loaded');
+                return false;
             }
-        });
 
-        // Загружаем существующие файлы
-        if (fileData && Array.isArray(fileData) && fileData.length > 0) {
-            var $uploadList = $('#fineuploader-{{ field_id }} .qq-upload-list');
-            fileData.forEach(function (file) {
-                var isImage = file.mimetype && file.mimetype.startsWith('image/');
-                var previewHtml = '';
-                if (isImage && file.download_url) {
-                    previewHtml = '<img src="' + file.download_url + '" alt="' + file.filename + '">';
-                } else {
-                    previewHtml = '<span style="font-size: 40px; color: #ccc;">📄</span>';
-                }
+            // Проверяем, что наш виджет загружен
+            if (typeof window.SlcorpFileBundle === 'undefined' || typeof window.SlcorpFileBundle.FineUploaderWidget !== 'function') {
+                console.error('[SlcorpFileBundle] SlcorpFileBundle.FineUploaderWidget is not loaded');
+                return false;
+            }
 
-                var $fileItem = $('<li class="qq-upload-success" data-draftitemid="' + file.draftitemid + '">' +
-                    '<div class="qq-thumbnail-wrapper">' + previewHtml + '</div>' +
-                    '<div class="qq-file-info">' +
-                    '<div class="qq-file-name">' + file.filename + '</div>' +
-                    '<div class="qq-file-size">' + (file.filesize / 1024).toFixed(2) + ' KB</div>' +
-                    '</div>' +
-                    '<span class="qq-upload-status-text qq-upload-status-success">Загружено</span>' +
-                    '<button type="button" class="qq-upload-delete" data-draftitemid="' + file.draftitemid + '">Удалить</button>' +
-                    '</li>');
-                $uploadList.append($fileItem);
-
-                uploadedFiles.push({
-                    draftitemid: file.draftitemid,
-                    filename: file.filename
-                });
-            });
-            updateHiddenField();
+            // Инициализируем виджет
+            try {
+                window.SlcorpFileBundle.FineUploaderWidget(widgetConfig);
+                return true;
+            } catch (e) {
+                console.error('[SlcorpFileBundle] Error initializing Fine Uploader widget:', e);
+                return false;
+            }
         }
 
-        // Обработчик удаления файла
-        $(document).on('click', '#fineuploader-{{ field_id }} .qq-upload-delete', function () {
-            var draftitemid = $(this).data('draftitemid');
-            if (confirm('Вы уверены, что хотите удалить этот файл?')) {
-                uploadedFiles = uploadedFiles.filter(function (file) {
-                    return file.draftitemid !== draftitemid;
-                });
-                updateHiddenField();
-                $(this).closest('li').remove();
-            }
-        });
+        // Инициализируем после загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initFineUploaderWidget);
+        } else {
+            // DOM уже загружен, инициализируем сразу
+            initFineUploaderWidget();
+        }
     })();
 </script>

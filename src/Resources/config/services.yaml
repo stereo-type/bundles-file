@@ -35,9 +35,6 @@ services:
   Slcorp\FileBundle\UI\Http\Controller\PluploadController:
     tags: [ 'slcorp.file.uploader_controller' ]
 
-  Slcorp\FileBundle\UI\Http\Controller\UploadifyController:
-    tags: [ 'slcorp.file.uploader_controller' ]
-
   Slcorp\FileBundle\UI\Http\Controller\BluimpController:
     tags: [ 'slcorp.file.uploader_controller' ]
 

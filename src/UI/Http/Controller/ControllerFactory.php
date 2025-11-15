@@ -29,7 +29,6 @@ class ControllerFactory
         //        $this->controllers[FileUILibrary::FINE_UPLOADER->value] = $controllers->get('Slcorp\FileBundle\UI\Http\Controller\FineUploaderController');
         //        $this->controllers[FileUILibrary::JQUERY_FILE_UPLOAD->value] = $controllers->get('Slcorp\FileBundle\UI\Http\Controller\JQueryFileUploadController');
         //        $this->controllers[FileUILibrary::PLUPLOAD->value] = $controllers->get('Slcorp\FileBundle\UI\Http\Controller\PluploadController');
-        //        $this->controllers[FileUILibrary::UPLOADIFY->value] = $controllers->get('Slcorp\FileBundle\UI\Http\Controller\UploadifyController');
         //        $this->controllers[FileUILibrary::BLUIMP->value] = $controllers->get('Slcorp\FileBundle\UI\Http\Controller\BluimpController');
     }
 

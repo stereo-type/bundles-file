@@ -31,7 +31,7 @@ readonly class UploadRouterController
     #[Route(
         path: '/file/upload/{ui_library}',
         name: 'slcorp_file_upload',
-        requirements: ['ui_library' => 'fineuploader|dropzone|jquery_file_upload|plupload|uploadify|bluimp'],
+        requirements: ['ui_library' => 'fineuploader|dropzone|jquery_file_upload|plupload|bluimp'],
         defaults: ['ui_library' => 'fineuploader'],
         methods: ['POST']
     )]

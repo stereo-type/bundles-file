@@ -2,7 +2,7 @@
 <div id="dropzone-{{ field_id }}" class="slcorp-file-uploader dropzone" data-upload-url="{{ upload_url }}"
      data-field-name="{{ field_name }}">
     <div class="dz-message">
-        <p>Перетащите файлы сюда или нажмите для выбора</p>
+        <p>{{ 'slcorp_file.dropzone.default_message'|trans }}</p>
     </div>
 </div>
 
@@ -10,186 +10,113 @@
 <input type="hidden" id="{{ field_id }}" name="{{ field_name }}"
        value="{% if file_data %}{{ file_data|map(f => f.draftitemid)|json_encode|raw }}{% else %}{{ value|default('[]') }}{% endif %}"/>
 
-{# Подключение Dropzone библиотеки #}
-<link href="https://cdn.jsdelivr.net/npm/dropzone@6.0.0-beta.2/dist/dropzone.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/dropzone@6.0.0-beta.2/dist/dropzone-min.js"></script>
+{# Подключение Dropzone библиотеки из бандла #}
+<link href="{{ asset('bundles/slcorpfile/vendor/dropzone/dropzone.css') }}" rel="stylesheet">
+<link href="{{ asset('bundles/slcorpfile/css/dropzone-widget.css') }}" rel="stylesheet">
 
-<style>
-    /* Масштабирование превью изображений в Dropzone */
-    #dropzone-{{ field_id }} .dz-image {
-        border-radius: 8px;
-        overflow: hidden;
-    }
+{# Подключение JavaScript - БЕЗ defer, чтобы скрипты загружались синхронно #}
+<script src="{{ asset('bundles/slcorpfile/vendor/dropzone/dropzone.min.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/js/dropzone-widget.js') }}"></script>
 
-    #dropzone-{{ field_id }} .dz-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain; /* Масштабировать с сохранением пропорций */
-        background: #f8f9fa;
-    }
-</style>
-
+{# Инициализация виджета - выполняется сразу после загрузки скриптов #}
 <script>
     (function () {
         'use strict';
 
-        // Отключаем автодискавери Dropzone
-        if (typeof Dropzone !== 'undefined') {
-            Dropzone.autoDiscover = false;
+        // Получаем переводы
+        var translations = {
+            default_message: {{ 'slcorp_file.dropzone.default_message'|trans|json_encode|raw }},
+            fallback_message: {{ 'slcorp_file.dropzone.fallback_message'|trans|json_encode|raw }},
+            file_too_big: {{ 'slcorp_file.dropzone.file_too_big'|trans|json_encode|raw }},
+            invalid_file_type: {{ 'slcorp_file.dropzone.invalid_file_type'|trans|json_encode|raw }},
+            response_error: {{ 'slcorp_file.dropzone.response_error'|trans|json_encode|raw }},
+            max_files_exceeded: {{ 'slcorp_file.dropzone.max_files_exceeded'|trans|json_encode|raw }},
+            remove_file: {{ 'slcorp_file.dropzone.remove_file'|trans|json_encode|raw }},
+            cancel_upload: {{ 'slcorp_file.dropzone.cancel_upload'|trans|json_encode|raw }},
+            cancel_upload_confirmation: {{ 'slcorp_file.dropzone.cancel_upload_confirmation'|trans|json_encode|raw }}
+        };
+
+        // Конфигурация для инициализации
+        var widgetConfig = {
+            fieldId: 'dropzone-{{ field_id }}', // ID контейнера Dropzone, а не скрытого поля
+            hiddenFieldId: '{{ field_id }}', // ID скрытого поля для хранения данных
+            uploadUrl: '{{ upload_url }}',
+            fieldName: '{{ field_name }}',
+            maxFiles: {{ form.vars.attr['data-max-files']|default(1) }},
+            maxFileSize: {{ form.vars.attr['data-max-size']|default(5242880) }},
+            allowedExtensions: {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}'{{ form.vars.attr['data-allowed-extensions'] }}'
+            {% else %}null{% endif %},
+            params: {
+                component: '{{ component }}',
+                filearea: '{{ filearea }}',
+                itemid: {{ itemid }},
+                contextid: {{ contextid }},
+                userid: {{ userid|default('null') }}
+            },
+            fileData: {{ file_data|json_encode|raw }},
+            translations: translations
+        };
+
+        // Функция инициализации виджета
+        function initDropzoneWidget() {
+            console.log('[SlcorpFileBundle] Initializing Dropzone widget...');
+
+            // Проверяем, что Dropzone загружен
+            if (typeof Dropzone === 'undefined') {
+                console.error('[SlcorpFileBundle] Dropzone is not loaded');
+                return false;
+            }
+            console.log('[SlcorpFileBundle] Dropzone loaded:', typeof Dropzone);
+
+            // Проверяем, что наш виджет загружен
+            if (typeof window.SlcorpFileBundle === 'undefined') {
+                console.error('[SlcorpFileBundle] window.SlcorpFileBundle is not defined');
+                return false;
+            }
+
+            if (typeof window.SlcorpFileBundle.DropzoneWidget !== 'function') {
+                console.error('[SlcorpFileBundle] SlcorpFileBundle.DropzoneWidget is not a function:', typeof window.SlcorpFileBundle.DropzoneWidget);
+                console.log('[SlcorpFileBundle] window.SlcorpFileBundle:', window.SlcorpFileBundle);
+                return false;
+            }
+            console.log('[SlcorpFileBundle] DropzoneWidget function found');
+
+            // Проверяем наличие контейнера Dropzone
+            var dropzoneElement = document.getElementById(widgetConfig.fieldId);
+            if (!dropzoneElement) {
+                console.error('[SlcorpFileBundle] Dropzone container not found:', widgetConfig.fieldId);
+                return false;
+            }
+            console.log('[SlcorpFileBundle] Dropzone container found:', dropzoneElement);
+
+            // Проверяем наличие скрытого поля
+            var hiddenField = document.getElementById(widgetConfig.hiddenFieldId);
+            if (!hiddenField) {
+                console.error('[SlcorpFileBundle] Hidden field not found:', widgetConfig.hiddenFieldId);
+                return false;
+            }
+            console.log('[SlcorpFileBundle] Hidden field found:', hiddenField);
+
+            // Инициализируем виджет
+            try {
+                console.log('[SlcorpFileBundle] Calling DropzoneWidget with config:', widgetConfig);
+                var dropzone = window.SlcorpFileBundle.DropzoneWidget(widgetConfig);
+                console.log('[SlcorpFileBundle] Dropzone initialized:', dropzone);
+                return true;
+            } catch (e) {
+                console.error('[SlcorpFileBundle] Error initializing Dropzone widget:', e);
+                console.error('[SlcorpFileBundle] Stack:', e.stack);
+                return false;
+            }
         }
 
-        var dropzone = new Dropzone('#dropzone-{{ field_id }}', {
-            url: '{{ upload_url }}',
-            paramName: 'file',
-            maxFiles: {{ form.vars.attr['data-max-files']|default(1) }},
-            addRemoveLinks: true, // Показывать кнопки удаления
-            autoProcessQueue: true, // Автоматически загружать файлы
-            thumbnailWidth: 200,  // Ширина превью
-            thumbnailHeight: 200, // Высота превью
-            thumbnailMethod: 'contain', // 'contain' - сохранить пропорции, 'crop' - обрезать
-            {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}
-            acceptedFiles: '{{ form.vars.attr['data-allowed-extensions'] }}',
-            {% endif %}
-            maxFilesize: {{ (form.vars.attr['data-max-size']|default(5242880) / 1048576)|round(2) }},
-            // Русские тексты
-            dictRemoveFile: "Удалить файл",
-            dictCancelUpload: "Отменить загрузку",
-            dictCancelUploadConfirmation: "Вы уверены, что хотите отменить загрузку?",
-            dictDefaultMessage: "Перетащите файлы сюда или нажмите для выбора",
-            dictFallbackMessage: "Ваш браузер не поддерживает drag'n'drop загрузку файлов.",
-            dictFileTooBig: "Файл слишком большой ({{ '{{filesize}}' }}МБ). Максимальный размер: {{ '{{maxFilesize}}' }}МБ.",
-            dictInvalidFileType: "Вы не можете загрузить файлы этого типа.",
-            dictResponseError: "Сервер ответил с кодом {{ '{{statusCode}}' }}.",
-            dictMaxFilesExceeded: "Вы не можете загрузить больше файлов.",
-            sending: function (file, xhr, formData) {
-                formData.append('component', '{{ component }}');
-                formData.append('filearea', '{{ filearea }}');
-                formData.append('itemid', {{ itemid }});
-                formData.append('contextid', {{ contextid }});
-                {% if userid is not null %}
-                formData.append('userid', {{ userid }});
-                {% endif %}
-            },
-            init: function () {
-                var thisDropzone = this;
-                var fileData = {{ file_data|json_encode|raw }};
-
-                // Добавляем существующие файлы
-                if (fileData && Array.isArray(fileData) && fileData.length > 0) {
-                    console.log('Dropzone: загрузка существующих файлов', fileData);
-
-                    fileData.forEach(function (file) {
-                        var mockFile = {
-                            name: file.filename,
-                            size: file.filesize,
-                            type: file.mimetype || 'application/octet-stream',
-                            status: 'success',
-                            accepted: true,
-                            draftitemid: file.draftitemid // Сохраняем для удаления
-                        };
-
-                        thisDropzone.emit('addedfile', mockFile);
-                        if (file.mimetype && file.mimetype.startsWith('image/')) {
-                            thisDropzone.emit('thumbnail', mockFile, file.download_url || '');
-                        }
-                        thisDropzone.emit('complete', mockFile);
-                        thisDropzone.files.push(mockFile);
-                    });
-                } else {
-                    console.log('Dropzone: нет существующих файлов');
-                }
-
-                // Нормализуем скрытое поле - всегда должен быть массив (JSON)
-                var hiddenField = document.getElementById('{{ field_id }}');
-                var currentValue = hiddenField.value || '[]';
-
-                try {
-                    var parsed = JSON.parse(currentValue);
-                    if (!Array.isArray(parsed)) {
-                        // Если не массив - преобразуем в массив
-                        hiddenField.value = parsed ? JSON.stringify([parsed]) : '[]';
-                    } else {
-                        // Уже массив - оставляем как есть
-                        hiddenField.value = JSON.stringify(parsed);
-                    }
-                } catch (e) {
-                    // Если не JSON - пытаемся преобразовать строку в массив
-                    if (currentValue && currentValue !== '[]') {
-                        hiddenField.value = JSON.stringify([currentValue]);
-                    } else {
-                        hiddenField.value = '[]';
-                    }
-                }
-            },
-            success: function (file, response) {
-                console.log('Dropzone: успешная загрузка', response);
-                // Добавляем draftitemid в массив в скрытом поле (всегда массив)
-                if (response && response.draftitemid) {
-                    var hiddenField = document.getElementById('{{ field_id }}');
-                    var currentValue = hiddenField.value || '[]';
-                    var draftItemIds = [];
-
-                    try {
-                        draftItemIds = JSON.parse(currentValue);
-                        if (!Array.isArray(draftItemIds)) {
-                            draftItemIds = [];
-                        }
-                    } catch (e) {
-                        draftItemIds = [];
-                    }
-
-                    // Добавляем новый draftitemid
-                    if (!draftItemIds.includes(response.draftitemid)) {
-                        draftItemIds.push(response.draftitemid);
-                        file.draftitemid = response.draftitemid; // Сохраняем для удаления
-                    }
-
-                    hiddenField.value = JSON.stringify(draftItemIds);
-                    console.log('Dropzone: draftitemid добавлен в массив', draftItemIds);
-                } else {
-                    console.error('Dropzone: response не содержит draftitemid', response);
-                }
-            },
-            // error: function (file, message, xhr) {
-            //     console.error('Dropzone: ошибка загрузки файла', message, xhr);
-            // }
-        });
-
-        // Обработчики событий для логирования и дополнительной логики
-        dropzone.on('addedfile', function (file) {
-            console.log('Dropzone: файл добавлен', file.name);
-        });
-
-        dropzone.on('complete', function (file) {
-            console.log('Dropzone: завершение обработки файла', file.name, 'status:', file.status);
-        });
-
-        dropzone.on('removedfile', function (file) {
-            console.log('Dropzone: файл удален', file.name);
-            // Удаляем draftitemid из массива в скрытом поле (всегда массив)
-            var hiddenField = document.getElementById('{{ field_id }}');
-            var currentValue = hiddenField.value || '[]';
-            var draftItemIds = [];
-
-            try {
-                draftItemIds = JSON.parse(currentValue);
-                if (!Array.isArray(draftItemIds)) {
-                    draftItemIds = [];
-                }
-            } catch (e) {
-                draftItemIds = [];
-            }
-
-            // Удаляем draftitemid этого файла
-            if (file.draftitemid) {
-                draftItemIds = draftItemIds.filter(function (id) {
-                    return id !== file.draftitemid;
-                });
-            }
-
-            hiddenField.value = JSON.stringify(draftItemIds);
-            console.log('Dropzone: draftitemid удален из массива', draftItemIds);
-        });
+        // Инициализируем после загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDropzoneWidget);
+        } else {
+            // DOM уже загружен, инициализируем сразу
+            initDropzoneWidget();
+        }
     })();
 </script>
 

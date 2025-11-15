@@ -3,11 +3,12 @@
     <div class="fileupload-buttonbar">
         <div class="fileupload-buttons">
             <span class="fileinput-button">
-                <span>Выбрать файл{% if form.vars.attr['data-max-files']|default(1) > 1 %}ы{% endif %}</span>
+                <span>{% if form.vars.attr['data-max-files']|default(1) > 1 %}{{ 'slcorp_file.jquery_file_upload.select_files'|trans }}{% else %}{{ 'slcorp_file.jquery_file_upload.select_file'|trans }}{% endif %}</span>
                 <input type="file"
                        name="files[]"{% if form.vars.attr['data-max-files']|default(1) > 1 %} multiple{% endif %}>
             </span>
-            <button type="button" class="delete" style="display: none;">Удалить выбранные</button>
+            <button type="button" class="delete"
+                    style="display: none;">{{ 'slcorp_file.jquery_file_upload.delete_selected'|trans }}</button>
         </div>
     </div>
     <div class="files"></div>
@@ -18,7 +19,7 @@
     <div class="error-modal-overlay"></div>
     <div class="error-modal-content">
         <div class="error-modal-header">
-            <h3>Ошибка</h3>
+            <h3>{{ 'slcorp_file.jquery_file_upload.error'|trans }}</h3>
             <button type="button" class="error-modal-close">&times;</button>
         </div>
         <div class="error-modal-body">
@@ -26,7 +27,7 @@
             <p class="error-message"></p>
         </div>
         <div class="error-modal-footer">
-            <button type="button" class="error-modal-ok">ОК</button>
+            <button type="button" class="error-modal-ok">{{ 'slcorp_file.jquery_file_upload.ok'|trans }}</button>
         </div>
     </div>
 </div>
@@ -35,707 +36,114 @@
 <input type="hidden" id="{{ field_id }}" name="{{ field_name }}"
        value="{% if file_data %}{{ file_data|map(f => f.draftitemid)|json_encode|raw }}{% else %}{{ value|default('[]') }}{% endif %}"/>
 
-{# Подключение jQuery File Upload библиотеки #}
-<link href="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/css/jquery.fileupload.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/css/jquery.fileupload-ui.css" rel="stylesheet">
+{# Подключение jQuery File Upload библиотеки из бандла #}
+<link href="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload.css') }}" rel="stylesheet">
+<link href="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload-ui.css') }}" rel="stylesheet">
+<link href="{{ asset('bundles/slcorpfile/css/jquery-file-upload-widget.css') }}" rel="stylesheet">
+
+{# Подключение jQuery (если еще не подключен) #}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/vendor/jquery.ui.widget.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.iframe-transport.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.fileupload.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.fileupload-process.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.fileupload-image.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.fileupload-validate.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.fileupload-ui.js"></script>
 
-<style>
-    /* Стили для jQuery File Upload */
-    #jquery-file-upload-{{ field_id }} {
-        font-family: Arial, sans-serif;
-    }
+{# Подключение jQuery File Upload библиотеки #}
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.ui.widget.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.iframe-transport.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload-process.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload-validate.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload-ui.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/js/jquery-file-upload-widget.js') }}"></script>
 
-    #jquery-file-upload-{{ field_id }} .fileupload-buttonbar {
-        margin-bottom: 20px;
-    }
-
-    #jquery-file-upload-{{ field_id }} .fileupload-buttons {
-        display: flex;
-        gap: 10px;
-    }
-
-    #jquery-file-upload-{{ field_id }} .fileinput-button {
-        position: relative;
-        overflow: hidden;
-        display: inline-block;
-    }
-
-    #jquery-file-upload-{{ field_id }} .fileinput-button input {
-        position: absolute;
-        top: 0;
-        right: 0;
-        margin: 0;
-        opacity: 0;
-        -ms-filter: 'alpha(opacity=0)';
-        font-size: 200px;
-        direction: ltr;
-        cursor: pointer;
-    }
-
-    #jquery-file-upload-{{ field_id }} .fileinput-button span {
-        display: inline-block;
-        padding: 8px 16px;
-        background: #007bff;
-        color: white;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    #jquery-file-upload-{{ field_id }} .fileinput-button:hover span {
-        background: #0056b3;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files {
-        margin-top: 20px;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-download {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        margin-bottom: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background: #f9f9f9;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-download .preview {
-        width: 80px;
-        height: 80px;
-        margin-right: 15px;
-        border-radius: 4px;
-        overflow: hidden;
-        background: #f0f0f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-download .preview img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-download .name {
-        flex: 1;
-        margin-right: 15px;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-download .size {
-        margin-right: 15px;
-        color: #666;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-download .delete {
-        padding: 5px 10px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-download .delete:hover {
-        background: #c82333;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-upload {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        margin-bottom: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background: #fff;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-upload .preview {
-        width: 80px;
-        height: 80px;
-        margin-right: 15px;
-        border-radius: 4px;
-        overflow: hidden;
-        background: #f0f0f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-upload .preview img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-upload .name {
-        flex: 1;
-        margin-right: 15px;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-upload .size {
-        margin-right: 15px;
-        color: #666;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-upload .progress {
-        width: 200px;
-        height: 20px;
-        margin-right: 15px;
-        background: #f0f0f0;
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-upload .progress .progress-bar {
-        height: 100%;
-        background: #007bff;
-        transition: width 0.3s;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-upload .cancel {
-        padding: 5px 10px;
-        background: #6c757d;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    #jquery-file-upload-{{ field_id }} .files .template-upload .cancel:hover {
-        background: #5a6268;
-    }
-
-    /* Стили для модального окна ошибок */
-    #error-modal-{{ field_id }} {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(2px);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-content {
-        position: relative;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        max-width: 500px;
-        width: 90%;
-        max-height: 90vh;
-        overflow: hidden;
-        animation: modalSlideIn 0.3s ease-out;
-    }
-
-    @keyframes modalSlideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-50px) scale(0.9);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-
-    #error-modal-{{ field_id }} .error-modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 24px;
-        border-bottom: 1px solid #e9ecef;
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-header h3 {
-        margin: 0;
-        color: white;
-        font-size: 20px;
-        font-weight: 600;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 28px;
-        line-height: 1;
-        cursor: pointer;
-        padding: 0;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: background 0.2s;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-close:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-body {
-        padding: 30px 24px;
-        text-align: center;
-    }
-
-    #error-modal-{{ field_id }} .error-icon {
-        font-size: 64px;
-        margin-bottom: 20px;
-        animation: errorPulse 2s infinite;
-    }
-
-    @keyframes errorPulse {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.1);
-        }
-    }
-
-    #error-modal-{{ field_id }} .error-message {
-        margin: 0;
-        font-size: 16px;
-        line-height: 1.6;
-        color: #333;
-        word-wrap: break-word;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-footer {
-        padding: 20px 24px;
-        border-top: 1px solid #e9ecef;
-        text-align: right;
-        background: #f8f9fa;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-ok {
-        padding: 10px 24px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-ok:hover {
-        background: #c82333;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-ok:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
-    }
-</style>
-
+{# Инициализация виджета #}
 <script>
     (function () {
         'use strict';
 
-        var $container = $('#jquery-file-upload-{{ field_id }}');
-        var $filesContainer = $container.find('.files');
-        var $hiddenField = $('#{{ field_id }}');
-        var maxFiles = {{ form.vars.attr['data-max-files']|default(1) }};
-        var maxFileSize = {{ form.vars.attr['data-max-size']|default(5242880) }};
-        var allowedExtensions = '{{ form.vars.attr['data-allowed-extensions']|default('') }}';
-        var fileData = {{ file_data|json_encode|raw }};
-        var uploadedFiles = [];
+        // Получаем переводы
+        var translations = {
+            select_file: {{ 'slcorp_file.jquery_file_upload.select_file'|trans|json_encode|raw }},
+            select_files: {{ 'slcorp_file.jquery_file_upload.select_files'|trans|json_encode|raw }},
+            delete_selected: {{ 'slcorp_file.jquery_file_upload.delete_selected'|trans|json_encode|raw }},
+            delete: {{ 'slcorp_file.jquery_file_upload.delete'|trans|json_encode|raw }},
+            cancel: {{ 'slcorp_file.jquery_file_upload.cancel'|trans|json_encode|raw }},
+            error: {{ 'slcorp_file.jquery_file_upload.error'|trans|json_encode|raw }},
+            ok: {{ 'slcorp_file.jquery_file_upload.ok'|trans|json_encode|raw }},
+            max_files_exceeded: {{ 'slcorp_file.jquery_file_upload.max_files_exceeded'|trans|json_encode|raw }},
+            file_too_big: {{ 'slcorp_file.jquery_file_upload.file_too_big'|trans|json_encode|raw }},
+            file_type_not_allowed: {{ 'slcorp_file.jquery_file_upload.file_type_not_allowed'|trans|json_encode|raw }},
+            validation_error: {{ 'slcorp_file.jquery_file_upload.validation_error'|trans|json_encode|raw }},
+            upload_error: {{ 'slcorp_file.jquery_file_upload.upload_error'|trans|json_encode|raw }},
+            delete_confirmation: {{ 'slcorp_file.jquery_file_upload.delete_confirmation'|trans|json_encode|raw }},
+            error_bad_request: {{ 'slcorp_file.jquery_file_upload.error_bad_request'|trans|json_encode|raw }},
+            error_unauthorized: {{ 'slcorp_file.jquery_file_upload.error_unauthorized'|trans|json_encode|raw }},
+            error_forbidden: {{ 'slcorp_file.jquery_file_upload.error_forbidden'|trans|json_encode|raw }},
+            error_not_found: {{ 'slcorp_file.jquery_file_upload.error_not_found'|trans|json_encode|raw }},
+            error_file_too_large: {{ 'slcorp_file.jquery_file_upload.error_file_too_large'|trans|json_encode|raw }},
+            error_unsupported_media_type: {{ 'slcorp_file.jquery_file_upload.error_unsupported_media_type'|trans|json_encode|raw }},
+            error_server: {{ 'slcorp_file.jquery_file_upload.error_server'|trans|json_encode|raw }},
+            error_bad_gateway: {{ 'slcorp_file.jquery_file_upload.error_bad_gateway'|trans|json_encode|raw }},
+            error_service_unavailable: {{ 'slcorp_file.jquery_file_upload.error_service_unavailable'|trans|json_encode|raw }},
+            error_timeout: {{ 'slcorp_file.jquery_file_upload.error_timeout'|trans|json_encode|raw }},
+            error_abort: {{ 'slcorp_file.jquery_file_upload.error_abort'|trans|json_encode|raw }},
+            error_parser: {{ 'slcorp_file.jquery_file_upload.error_parser'|trans|json_encode|raw }}
+        };
 
-        // Нормализуем скрытое поле - всегда должен быть массив (JSON)
-        var currentValue = $hiddenField.val() || '[]';
-        try {
-            var parsed = JSON.parse(currentValue);
-            if (!Array.isArray(parsed)) {
-                $hiddenField.val(parsed ? JSON.stringify([parsed]) : '[]');
-            } else {
-                $hiddenField.val(JSON.stringify(parsed));
+        // Конфигурация для инициализации
+        var widgetConfig = {
+            containerId: 'jquery-file-upload-{{ field_id }}',
+            hiddenFieldId: '{{ field_id }}',
+            uploadUrl: '{{ upload_url }}',
+            fieldName: '{{ field_name }}',
+            maxFiles: {{ form.vars.attr['data-max-files']|default(1) }},
+            maxFileSize: {{ form.vars.attr['data-max-size']|default(5242880) }},
+            allowedExtensions: {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}'{{ form.vars.attr['data-allowed-extensions'] }}'
+            {% else %}null{% endif %},
+            params: {
+                component: '{{ component }}',
+                filearea: '{{ filearea }}',
+                itemid: {{ itemid }},
+                contextid: {{ contextid }},
+                userid: {{ userid|default('null') }}
+            },
+            fileData: {{ file_data|json_encode|raw }},
+            translations: translations
+        };
+
+        // Функция инициализации виджета
+        function initJQueryFileUploadWidget() {
+            // Проверяем, что jQuery загружен
+            if (typeof jQuery === 'undefined') {
+                console.error('[SlcorpFileBundle] jQuery is not loaded');
+                return false;
             }
-        } catch (e) {
-            if (currentValue && currentValue !== '[]') {
-                $hiddenField.val(JSON.stringify([currentValue]));
-            } else {
-                $hiddenField.val('[]');
+
+            // Проверяем, что jQuery File Upload загружен
+            if (typeof jQuery.fn.fileupload === 'undefined') {
+                console.error('[SlcorpFileBundle] jQuery File Upload plugin is not loaded');
+                return false;
+            }
+
+            // Проверяем, что наш виджет загружен
+            if (typeof window.SlcorpFileBundle === 'undefined' || typeof window.SlcorpFileBundle.JQueryFileUploadWidget !== 'function') {
+                console.error('[SlcorpFileBundle] SlcorpFileBundle.JQueryFileUploadWidget is not loaded');
+                return false;
+            }
+
+            // Инициализируем виджет
+            try {
+                window.SlcorpFileBundle.JQueryFileUploadWidget(widgetConfig);
+                return true;
+            } catch (e) {
+                console.error('[SlcorpFileBundle] Error initializing jQuery File Upload widget:', e);
+                return false;
             }
         }
 
-        // Загружаем существующие файлы
-        if (fileData && Array.isArray(fileData) && fileData.length > 0) {
-            console.log('jQuery File Upload: загрузка существующих файлов', fileData);
-            fileData.forEach(function (file) {
-                addExistingFile(file);
-            });
+        // Инициализируем после загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initJQueryFileUploadWidget);
+        } else {
+            // DOM уже загружен, инициализируем сразу
+            initJQueryFileUploadWidget();
         }
-
-        function addExistingFile(file) {
-            var $template = $('<div class="template-download">' +
-                '<div class="preview">' +
-                (file.mimetype && file.mimetype.startsWith('image/') ?
-                    '<img src="' + (file.download_url || '') + '" alt="' + escapeHtml(file.filename) + '">' :
-                    '<span>📄</span>') +
-                '</div>' +
-                '<div class="name">' + escapeHtml(file.filename) + '</div>' +
-                '<div class="size">' + formatFileSize(file.filesize) + '</div>' +
-                '<button type="button" class="delete" data-draftitemid="' + file.draftitemid + '">Удалить</button>' +
-                '</div>');
-
-            $filesContainer.append($template);
-            uploadedFiles.push({
-                draftitemid: file.draftitemid,
-                filename: file.filename
-            });
-        }
-
-        function escapeHtml(text) {
-            var map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, function (m) {
-                return map[m];
-            });
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            var k = 1024;
-            var sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            var i = Math.floor(Math.log(bytes) / Math.log(k));
-            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-        }
-
-        function updateHiddenField() {
-            var draftItemIds = uploadedFiles.map(function (file) {
-                return file.draftitemid;
-            });
-            $hiddenField.val(JSON.stringify(draftItemIds));
-            console.log('jQuery File Upload: draftitemid обновлен', draftItemIds);
-        }
-
-        // Функция для показа модального окна с ошибкой
-        function showErrorModal(message) {
-            var $modal = $('#error-modal-{{ field_id }}');
-            var $message = $modal.find('.error-message');
-            $message.text(message);
-            $modal.fadeIn(200);
-        }
-
-        // Функция для скрытия модального окна
-        function hideErrorModal() {
-            var $modal = $('#error-modal-{{ field_id }}');
-            $modal.fadeOut(200);
-        }
-
-        // Обработчики закрытия модального окна
-        $('#error-modal-{{ field_id }} .error-modal-close, #error-modal-{{ field_id }} .error-modal-ok, #error-modal-{{ field_id }} .error-modal-overlay').on('click', function () {
-            hideErrorModal();
-        });
-
-        // Предотвращаем закрытие при клике на контент
-        $('#error-modal-{{ field_id }} .error-modal-content').on('click', function (e) {
-            e.stopPropagation();
-        });
-
-        // Инициализация jQuery File Upload
-        var allowedMimeTypes = [];
-        {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}
-        allowedMimeTypes = '{{ form.vars.attr['data-allowed-extensions'] }}'.split(',').map(function (type) {
-            return type.trim();
-        }).filter(function (type) {
-            return type.length > 0;
-        });
-        {% endif %}
-
-        $container.find('input[type="file"]').fileupload({
-            url: '{{ upload_url }}',
-            dataType: 'json',
-            autoUpload: true,
-            maxNumberOfFiles: maxFiles,
-            maxFileSize: maxFileSize,
-            {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}
-            accept: function (file) {
-                if (allowedMimeTypes.length === 0) {
-                    return true;
-                }
-                return allowedMimeTypes.indexOf(file.type) !== -1;
-            },
-            {% endif %}
-            formData: function () {
-                return [
-                    {name: 'component', value: '{{ component }}'},
-                    {name: 'filearea', value: '{{ filearea }}'},
-                    {name: 'itemid', value: {{ itemid }}},
-                    {name: 'contextid', value: {{ contextid }}}
-                    {% if userid is not null %},
-                    {name: 'userid', value: {{ userid }}}
-                    {% endif %}
-                ];
-            },
-            add: function (e, data) {
-                // Если maxFiles = 1, удаляем предыдущий файл
-                if (maxFiles === 1 && uploadedFiles.length >= 1) {
-                    // Удаляем все существующие файлы
-                    $filesContainer.find('.template-download').each(function () {
-                        var $template = $(this);
-                        var draftitemid = $template.find('.delete').data('draftitemid');
-                        uploadedFiles = uploadedFiles.filter(function (file) {
-                            return file.draftitemid !== draftitemid;
-                        });
-                        $template.remove();
-                    });
-                    updateHiddenField();
-                }
-
-                // Проверяем максимальное количество файлов
-                if (uploadedFiles.length >= maxFiles) {
-                    showErrorModal('Максимальное количество файлов: ' + maxFiles);
-                    return false;
-                }
-
-                // Проверяем размер файла
-                if (data.files[0].size > maxFileSize) {
-                    showErrorModal('Файл слишком большой. Максимальный размер: ' + formatFileSize(maxFileSize));
-                    return false;
-                }
-
-                // Добавляем файл в очередь
-                var $template = $('<div class="template-upload">' +
-                    '<div class="preview"></div>' +
-                    '<div class="name">' + escapeHtml(data.files[0].name) + '</div>' +
-                    '<div class="size">' + formatFileSize(data.files[0].size) + '</div>' +
-                    '<div class="progress"><div class="progress-bar" style="width: 0%"></div></div>' +
-                    '<button type="button" class="cancel">Отменить</button>' +
-                    '</div>');
-
-                $filesContainer.append($template);
-
-                // Если это изображение, показываем превью
-                if (data.files[0].type && data.files[0].type.startsWith('image/')) {
-                    var reader = new FileReader();
-                    reader.onload = function (e) {
-                        $template.find('.preview').html('<img src="' + e.target.result + '" alt="' + escapeHtml(data.files[0].name) + '">');
-                    };
-                    reader.readAsDataURL(data.files[0]);
-                } else {
-                    $template.find('.preview').html('<span>📄</span>');
-                }
-
-                // Обработчик отмены
-                $template.find('.cancel').on('click', function () {
-                    data.abort();
-                    $template.remove();
-                });
-
-                // Начинаем загрузку
-                data.submit();
-            },
-            progress: function (e, data) {
-                var progress = parseInt(data.loaded / data.total * 100, 10);
-                var $template = data.context || $filesContainer.find('.template-upload').last();
-                $template.find('.progress-bar').css('width', progress + '%');
-            },
-            done: function (e, data) {
-                console.log('jQuery File Upload: успешная загрузка', data.result);
-                var $template = data.context || $filesContainer.find('.template-upload').last();
-
-                if (data.result && Array.isArray(data.result) && data.result.length > 0) {
-                    var file = data.result[0];
-                    if (file.draftitemid) {
-                        // Заменяем шаблон загрузки на шаблон загруженного файла
-                        var $downloadTemplate = $('<div class="template-download">' +
-                            '<div class="preview">' +
-                            (file.thumbnailUrl ?
-                                '<img src="' + file.thumbnailUrl + '" alt="' + escapeHtml(file.name) + '">' :
-                                '<span>📄</span>') +
-                            '</div>' +
-                            '<div class="name">' + escapeHtml(file.name) + '</div>' +
-                            '<div class="size">' + formatFileSize(file.size) + '</div>' +
-                            '<button type="button" class="delete" data-draftitemid="' + file.draftitemid + '">Удалить</button>' +
-                            '</div>');
-
-                        $template.replaceWith($downloadTemplate);
-
-                        // Добавляем в массив загруженных файлов
-                        uploadedFiles.push({
-                            draftitemid: file.draftitemid,
-                            filename: file.name
-                        });
-
-                        // Обновляем скрытое поле
-                        updateHiddenField();
-                    } else {
-                        console.error('jQuery File Upload: response не содержит draftitemid', data.result);
-                        $template.remove();
-                    }
-                } else {
-                    console.error('jQuery File Upload: неверный формат ответа', data.result);
-                    $template.remove();
-                }
-            },
-            processfail: function (e, data) {
-                console.error('jQuery File Upload: ошибка валидации файла', data);
-                var $template = data.context || $filesContainer.find('.template-upload').last();
-                var errorMessage = 'Ошибка валидации файла';
-
-                if (data.files && data.files[0]) {
-                    if (data.files[0].error) {
-                        errorMessage = data.files[0].error;
-                    } else if (allowedMimeTypes.length > 0 && data.files[0].type && allowedMimeTypes.indexOf(data.files[0].type) === -1) {
-                        errorMessage = 'Тип файла не разрешен. Разрешенные типы: ' + allowedMimeTypes.join(', ');
-                    } else if (data.files[0].size > maxFileSize) {
-                        errorMessage = 'Файл слишком большой. Максимальный размер: ' + formatFileSize(maxFileSize);
-                    }
-                }
-
-                showErrorModal(errorMessage);
-                if ($template.length) {
-                    $template.remove();
-                }
-            },
-            fail: function (e, data) {
-                console.error('jQuery File Upload: ошибка загрузки файла', data);
-                var $template = data.context || $filesContainer.find('.template-upload').last();
-                var errorMessage = 'Ошибка загрузки файла';
-
-                // Пытаемся извлечь конкретное сообщение об ошибке из разных источников
-                if (data.result) {
-                    // Если сервер вернул JSON с ошибкой
-                    if (data.result.error) {
-                        errorMessage = data.result.error;
-                    } else if (typeof data.result === 'string') {
-                        errorMessage = data.result;
-                    } else if (data.result[0] && data.result[0].error) {
-                        errorMessage = data.result[0].error;
-                    }
-                } else if (data.jqXHR) {
-                    // Проверяем responseJSON
-                    if (data.jqXHR.responseJSON) {
-                        if (data.jqXHR.responseJSON.error) {
-                            errorMessage = data.jqXHR.responseJSON.error;
-                        } else if (data.jqXHR.responseJSON.message) {
-                            errorMessage = data.jqXHR.responseJSON.message;
-                        } else if (typeof data.jqXHR.responseJSON === 'string') {
-                            errorMessage = data.jqXHR.responseJSON;
-                        }
-                    }
-                    // Проверяем responseText (может быть JSON строка)
-                    else if (data.jqXHR.responseText) {
-                        try {
-                            var parsed = JSON.parse(data.jqXHR.responseText);
-                            if (parsed.error) {
-                                errorMessage = parsed.error;
-                            } else if (parsed.message) {
-                                errorMessage = parsed.message;
-                            } else if (typeof parsed === 'string') {
-                                errorMessage = parsed;
-                            }
-                        } catch (e) {
-                            // Если не JSON, используем как есть (но обрезаем если слишком длинный)
-                            var responseText = data.jqXHR.responseText.trim();
-                            if (responseText.length > 0 && responseText.length < 500) {
-                                errorMessage = responseText;
-                            }
-                        }
-                    }
-
-                    // Добавляем информацию о статусе, если есть
-                    if (data.jqXHR.status) {
-                        var statusMessages = {
-                            400: 'Неверный запрос',
-                            401: 'Требуется авторизация',
-                            403: 'Доступ запрещен',
-                            404: 'Файл не найден',
-                            413: 'Файл слишком большой',
-                            415: 'Неподдерживаемый тип файла',
-                            500: 'Ошибка сервера',
-                            502: 'Ошибка шлюза',
-                            503: 'Сервис недоступен'
-                        };
-
-                        if (statusMessages[data.jqXHR.status] && errorMessage === 'Ошибка загрузки файла') {
-                            errorMessage = statusMessages[data.jqXHR.status];
-                            if (data.jqXHR.statusText) {
-                                errorMessage += ' (' + data.jqXHR.statusText + ')';
-                            }
-                        } else if (data.jqXHR.statusText && errorMessage === 'Ошибка загрузки файла') {
-                            errorMessage = data.jqXHR.statusText;
-                        }
-                    }
-                } else if (data.textStatus) {
-                    // textStatus может быть: 'error', 'timeout', 'abort', 'parsererror'
-                    var statusMessages = {
-                        'error': 'Ошибка при загрузке файла',
-                        'timeout': 'Превышено время ожидания',
-                        'abort': 'Загрузка отменена',
-                        'parsererror': 'Ошибка при обработке ответа сервера'
-                    };
-                    errorMessage = statusMessages[data.textStatus] || data.textStatus;
-                }
-
-                // Если все еще общее сообщение, добавляем информацию о файле
-                if (errorMessage === 'Ошибка загрузки файла' && data.files && data.files[0]) {
-                    errorMessage = 'Ошибка при загрузке файла "' + data.files[0].name + '"';
-                }
-
-                showErrorModal(errorMessage);
-                if ($template.length) {
-                    $template.remove();
-                }
-            }
-        });
-
-        // Обработчик удаления файла
-        $filesContainer.on('click', '.delete', function () {
-            var $button = $(this);
-            var draftitemid = $button.data('draftitemid');
-            var $template = $button.closest('.template-download');
-
-            // Используем стандартный confirm, так как это действие пользователя, а не ошибка
-            if (confirm('Вы уверены, что хотите удалить этот файл?')) {
-                // Удаляем из массива
-                uploadedFiles = uploadedFiles.filter(function (file) {
-                    return file.draftitemid !== draftitemid;
-                });
-
-                // Обновляем скрытое поле
-                updateHiddenField();
-
-                // Удаляем из DOM
-                $template.remove();
-                console.log('jQuery File Upload: файл удален', draftitemid);
-            }
-        });
     })();
 </script>
-

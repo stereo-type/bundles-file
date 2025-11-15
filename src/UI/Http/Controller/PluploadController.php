@@ -88,4 +88,3 @@ class PluploadController extends BaseUploadController
         return FileUILibrary::PLUPLOAD;
     }
 }
-

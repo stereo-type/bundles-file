@@ -106,4 +106,3 @@ class JQueryFileUploadController extends BaseUploadController
         return FileUILibrary::JQUERY_FILE_UPLOAD;
     }
 }
-

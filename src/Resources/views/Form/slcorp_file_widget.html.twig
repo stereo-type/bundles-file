@@ -41,8 +41,6 @@
         {% include '@SlcorpFileBundle/Form/jquery_file_upload_widget.html.twig' with widget_params %}
     {% elseif ui_library == 'plupload' %}
         {% include '@SlcorpFileBundle/Form/plupload_widget.html.twig' with widget_params %}
-    {% elseif ui_library == 'uploadify' %}
-        {% include '@SlcorpFileBundle/Form/uploadify_widget.html.twig' with widget_params %}
     {% elseif ui_library == 'bluimp' %}
         {% include '@SlcorpFileBundle/Form/bluimp_widget.html.twig' with widget_params %}
     {% else %}

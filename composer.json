@@ -73,7 +73,14 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
         "fix": "php vendor/bin/php-cs-fixer fix",
-        "stan": "php vendor/bin/phpstan analyse"
+      "stan": "php vendor/bin/phpstan analyse",
+      "install-assets": "php bin/install-assets.php",
+      "post-install-cmd": [
+        "@install-assets"
+      ],
+      "post-update-cmd": [
+        "@install-assets"
+      ]
     },
     "config": {
         "allow-plugins": {

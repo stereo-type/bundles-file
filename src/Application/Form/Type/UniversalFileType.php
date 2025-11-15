@@ -62,7 +62,7 @@ class UniversalFileType extends AbstractType
         $builder->setAttribute('contextid', $options['contextid'] ?? 1);
         $builder->setAttribute('userid', $userId);
 
-        /*@phpstan-ignore-next-line */
+        /* @phpstan-ignore-next-line */
         $adapterString = $options['adapter']?->value ?? $this->parameterBag->get('slcorp_file.adapter');
         $adapter = is_string($adapterString) ? FileAdapter::from($adapterString) : $adapterString;
 
@@ -74,7 +74,7 @@ class UniversalFileType extends AbstractType
         // Если mapped = false и параметры не указаны - просто не добавляем трансформер
         } else {
             // Получаем maxFiles из атрибутов или конфига
-            /*@phpstan-ignore-next-line */
+            /* @phpstan-ignore-next-line */
             $maxFiles = $options['attr']['data-max-files'] ?? $this->parameterBag->get('slcorp_file.validation.max_files') ?? 1;
             $maxFiles = is_numeric($maxFiles) ? (int) $maxFiles : 1;
 

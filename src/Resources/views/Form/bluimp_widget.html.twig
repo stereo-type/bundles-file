@@ -1,9 +1,9 @@
-{# Blueimp Widget - используем встроенные возможности библиотеки #}
+{# Bluimp (Blueimp File Upload) Widget #}
 <div id="bluimp-{{ field_id }}" class="slcorp-file-uploader bluimp-wrapper">
     <div class="fileupload-buttonbar">
         <div class="fileupload-buttons">
             <span class="fileinput-button">
-                <span>Выбрать файл{% if form.vars.attr['data-max-files']|default(1) > 1 %}ы{% endif %}</span>
+                <span>{% if form.vars.attr['data-max-files']|default(1) > 1 %}{{ 'slcorp_file.bluimp.select_files'|trans }}{% else %}{{ 'slcorp_file.bluimp.select_file'|trans }}{% endif %}</span>
                 <input type="file"
                        name="files[]"{% if form.vars.attr['data-max-files']|default(1) > 1 %} multiple{% endif %}>
             </span>
@@ -17,7 +17,7 @@
     <div class="error-modal-overlay"></div>
     <div class="error-modal-content">
         <div class="error-modal-header">
-            <h3>Ошибка</h3>
+            <h3>{{ 'slcorp_file.bluimp.error'|trans }}</h3>
             <button type="button" class="error-modal-close">&times;</button>
         </div>
         <div class="error-modal-body">
@@ -25,7 +25,7 @@
             <p class="error-message"></p>
         </div>
         <div class="error-modal-footer">
-            <button type="button" class="error-modal-ok">ОК</button>
+            <button type="button" class="error-modal-ok">{{ 'slcorp_file.bluimp.ok'|trans }}</button>
         </div>
     </div>
 </div>
@@ -34,493 +34,102 @@
 <input type="hidden" id="{{ field_id }}" name="{{ field_name }}"
        value="{% if file_data %}{{ file_data|map(f => f.draftitemid)|json_encode|raw }}{% else %}{{ value|default('[]') }}{% endif %}"/>
 
-{# Подключение Blueimp File Upload библиотеки #}
-<link href="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/css/jquery.fileupload.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/css/jquery.fileupload-ui.css" rel="stylesheet">
+{# Подключение jQuery (если еще не подключен) #}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/vendor/jquery.ui.widget.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.iframe-transport.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.fileupload.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.fileupload-process.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.fileupload-validate.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/blueimp-file-upload@10.32.0/js/jquery.fileupload-ui.js"></script>
 
-<style>
-    /* Стили для Blueimp */
-    #bluimp-{{ field_id }}.bluimp-wrapper {
-        font-family: Arial, sans-serif;
-    }
+{# Подключение Blueimp File Upload библиотеки из бандла #}
+<link href="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload.css') }}" rel="stylesheet">
+<link href="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload-ui.css') }}" rel="stylesheet">
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.ui.widget.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.iframe-transport.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload-process.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload-validate.js') }}"></script>
+<script src="{{ asset('bundles/slcorpfile/vendor/jquery-file-upload/jquery.fileupload-ui.js') }}"></script>
 
-    #bluimp-{{ field_id }} .fileupload-buttonbar {
-        margin-bottom: 20px;
-    }
+{# Подключение стилей #}
+<link href="{{ asset('bundles/slcorpfile/css/bluimp-widget.css') }}" rel="stylesheet">
 
-    #bluimp-{{ field_id }} .fileinput-button {
-        position: relative;
-        display: inline-block;
-        overflow: hidden;
-    }
+{# Подключение JavaScript #}
+<script src="{{ asset('bundles/slcorpfile/js/bluimp-widget.js') }}"></script>
 
-    #bluimp-{{ field_id }} .fileinput-button input {
-        position: absolute;
-        top: 0;
-        right: 0;
-        margin: 0;
-        opacity: 0;
-        filter: alpha(opacity=0);
-        font-size: 200px;
-        direction: ltr;
-        cursor: pointer;
-    }
-
-    #bluimp-{{ field_id }} .fileinput-button span {
-        display: inline-block;
-        padding: 10px 20px;
-        background: #007bff;
-        color: white;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background 0.2s;
-    }
-
-    #bluimp-{{ field_id }} .fileinput-button:hover span {
-        background: #0056b3;
-    }
-
-    #bluimp-{{ field_id }} .files {
-        margin-top: 20px;
-    }
-
-    #bluimp-{{ field_id }} .files .template-upload,
-    #bluimp-{{ field_id }} .files .template-download {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        margin-bottom: 10px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    #bluimp-{{ field_id }} .files .preview {
-        width: 80px;
-        height: 80px;
-        margin-right: 15px;
-        border-radius: 4px;
-        overflow: hidden;
-        background: #f0f0f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    #bluimp-{{ field_id }} .files .preview img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    #bluimp-{{ field_id }} .files .name {
-        flex: 1;
-        min-width: 0;
-        font-weight: 500;
-        margin-bottom: 5px;
-        word-break: break-word;
-    }
-
-    #bluimp-{{ field_id }} .files .size {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-
-    #bluimp-{{ field_id }} .files .progress {
-        width: 100%;
-        height: 6px;
-        background: #f0f0f0;
-        border-radius: 3px;
-        overflow: hidden;
-        margin-bottom: 10px;
-    }
-
-    #bluimp-{{ field_id }} .files .progress .progress-bar {
-        height: 100%;
-        background: #007bff;
-        transition: width 0.3s;
-        border-radius: 3px;
-    }
-
-    #bluimp-{{ field_id }} .files .start,
-    #bluimp-{{ field_id }} .files .cancel,
-    #bluimp-{{ field_id }} .files .delete {
-        padding: 8px 16px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background 0.2s;
-        margin-left: 10px;
-    }
-
-    #bluimp-{{ field_id }} .files .start:hover,
-    #bluimp-{{ field_id }} .files .cancel:hover,
-    #bluimp-{{ field_id }} .files .delete:hover {
-        background: #c82333;
-    }
-
-    /* Стили для модального окна ошибок */
-    #error-modal-{{ field_id }} {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(2px);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-content {
-        position: relative;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        max-width: 500px;
-        width: 90%;
-        animation: modalSlideIn 0.3s ease-out;
-    }
-
-    @keyframes modalSlideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-50px) scale(0.9);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-
-    #error-modal-{{ field_id }} .error-modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 24px;
-        border-bottom: 1px solid #e9ecef;
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-header h3 {
-        margin: 0;
-        color: white;
-        font-size: 20px;
-        font-weight: 600;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 28px;
-        line-height: 1;
-        cursor: pointer;
-        padding: 0;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: background 0.2s;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-close:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    #error-modal-{{ field_id }} .error-modal-body {
-        padding: 30px 24px;
-        text-align: center;
-    }
-
-    #error-modal-{{ field_id }} .error-icon {
-        font-size: 64px;
-        margin-bottom: 20px;
-    }
-
-    #error-modal-{{ field_id }} .error-message {
-        margin: 0;
-        font-size: 16px;
-        line-height: 1.6;
-        color: #333;
-        word-wrap: break-word;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-footer {
-        padding: 20px 24px;
-        border-top: 1px solid #e9ecef;
-        text-align: right;
-        background: #f8f9fa;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-ok {
-        padding: 10px 24px;
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    #error-modal-{{ field_id }} .error-modal-ok:hover {
-        background: #c82333;
-        transform: translateY(-1px);
-    }
-</style>
-
+{# Инициализация виджета #}
 <script>
     (function () {
         'use strict';
 
-        var $hiddenField = $('#{{ field_id }}');
-        var maxFiles = {{ form.vars.attr['data-max-files']|default(1) }};
-        var maxFileSize = {{ form.vars.attr['data-max-size']|default(5242880) }};
-        var fileData = {{ file_data|json_encode|raw }};
-        var uploadedFiles = [];
+        // Получаем переводы
+        var translations = {
+            select_file: {{ 'slcorp_file.bluimp.select_file'|trans|json_encode|raw }},
+            select_files: {{ 'slcorp_file.bluimp.select_files'|trans|json_encode|raw }},
+            delete: {{ 'slcorp_file.bluimp.delete'|trans|json_encode|raw }},
+            cancel: {{ 'slcorp_file.bluimp.cancel'|trans|json_encode|raw }},
+            error: {{ 'slcorp_file.bluimp.error'|trans|json_encode|raw }},
+            ok: {{ 'slcorp_file.bluimp.ok'|trans|json_encode|raw }},
+            max_files_exceeded: {{ 'slcorp_file.bluimp.max_files_exceeded'|trans|json_encode|raw }},
+            file_too_big: {{ 'slcorp_file.bluimp.file_too_big'|trans|json_encode|raw }},
+            file_type_not_allowed: {{ 'slcorp_file.bluimp.file_type_not_allowed'|trans|json_encode|raw }},
+            upload_error: {{ 'slcorp_file.bluimp.upload_error'|trans|json_encode|raw }},
+            delete_confirmation: {{ 'slcorp_file.bluimp.delete_confirmation'|trans|json_encode|raw }}
+        };
 
-        // Нормализуем скрытое поле
-        var currentValue = $hiddenField.val() || '[]';
-        try {
-            var parsed = JSON.parse(currentValue);
-            $hiddenField.val(Array.isArray(parsed) ? JSON.stringify(parsed) : JSON.stringify(parsed ? [parsed] : []));
-        } catch (e) {
-            $hiddenField.val(currentValue && currentValue !== '[]' ? JSON.stringify([currentValue]) : '[]');
-        }
-
-        // Обновление скрытого поля
-        function updateHiddenField() {
-            var draftItemIds = uploadedFiles.map(function (file) {
-                return file.draftitemid;
-            });
-            $hiddenField.val(JSON.stringify(draftItemIds));
-        }
-
-        // Модальное окно для ошибок
-        function showErrorModal(message) {
-            var $modal = $('#error-modal-{{ field_id }}');
-            $modal.find('.error-message').text(message);
-            $modal.fadeIn(200);
-        }
-
-        function hideErrorModal() {
-            $('#error-modal-{{ field_id }}').fadeOut(200);
-        }
-
-        $('#error-modal-{{ field_id }} .error-modal-close, #error-modal-{{ field_id }} .error-modal-ok, #error-modal-{{ field_id }} .error-modal-overlay').on('click', hideErrorModal);
-        $('#error-modal-{{ field_id }} .error-modal-content').on('click', function (e) {
-            e.stopPropagation();
-        });
-
-        // Подготовка разрешенных MIME типов для Blueimp
-        var allowedMimeTypes = [];
-        {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}
-        allowedMimeTypes = '{{ form.vars.attr['data-allowed-extensions'] }}'.split(',').map(function (type) {
-            return type.trim();
-        }).filter(function (type) {
-            return type.length > 0;
-        });
-        {% endif %}
-
-        // Инициализация Blueimp File Upload - используем встроенные возможности библиотеки
-        $('#bluimp-{{ field_id }}').fileupload({
-            url: '{{ upload_url }}',
-            dataType: 'json',
-            autoUpload: true,
-            maxFileSize: maxFileSize,
-            maxNumberOfFiles: maxFiles,
-            acceptFileTypes: allowedMimeTypes.length > 0 ? new RegExp('(' + allowedMimeTypes.map(function (mime) {
-                var parts = mime.split('/');
-                if (parts.length === 2) {
-                    var ext = parts[1];
-                    if (ext === 'jpeg') ext = 'jpg|jpeg';
-                    return ext;
-                }
-                return '';
-            }).filter(function (ext) {
-                return ext.length > 0;
-            }).join('|') + ')$', 'i') : undefined,
-            formData: {
+        // Конфигурация для инициализации
+        var widgetConfig = {
+            containerId: 'bluimp-{{ field_id }}',
+            hiddenFieldId: '{{ field_id }}',
+            uploadUrl: '{{ upload_url }}',
+            fieldName: '{{ field_name }}',
+            maxFiles: {{ form.vars.attr['data-max-files']|default(1) }},
+            maxFileSize: {{ form.vars.attr['data-max-size']|default(5242880) }},
+            allowedExtensions: {% if form.vars.attr['data-allowed-extensions'] is defined and form.vars.attr['data-allowed-extensions'] %}'{{ form.vars.attr['data-allowed-extensions'] }}'
+            {% else %}null{% endif %},
+            params: {
                 component: '{{ component }}',
                 filearea: '{{ filearea }}',
                 itemid: {{ itemid }},
-                contextid: {{ contextid }}
-                {% if userid is not null %},
-                userid: {{ userid }}
-                {% endif %}
+                contextid: {{ contextid }},
+                userid: {{ userid|default('null') }}
             },
-            // Используем встроенные шаблоны Blueimp
-            filesContainer: $('#bluimp-{{ field_id }} .files'),
-            uploadTemplateId: null,
-            downloadTemplateId: null,
-            // Обработчики событий
-            add: function (e, data) {
-                // Если maxFiles = 1, удаляем предыдущие файлы
-                if (maxFiles === 1 && uploadedFiles.length >= 1) {
-                    $('#bluimp-{{ field_id }} .files').empty();
-                    uploadedFiles = [];
-                    updateHiddenField();
-                }
+            fileData: {{ file_data|json_encode|raw }},
+            translations: translations
+        };
 
-                // Проверяем максимальное количество файлов
-                if (uploadedFiles.length + data.files.length > maxFiles) {
-                    showErrorModal('Максимальное количество файлов: ' + maxFiles);
-                    return false;
-                }
-
-                // Используем встроенную обработку Blueimp
-                data.context = $('<div class="template-upload">' +
-                    '<div class="preview"><span style="font-size: 40px; color: #ccc;">📄</span></div>' +
-                    '<div style="flex: 1;">' +
-                    '<div class="name"></div>' +
-                    '<div class="size"></div>' +
-                    '<div class="progress"><div class="progress-bar" style="width: 0%"></div></div>' +
-                    '</div>' +
-                    '<button type="button" class="cancel">Отмена</button>' +
-                    '</div>').appendTo('#bluimp-{{ field_id }} .files');
-
-                // Превью для изображений
-                if (data.files[0].type && data.files[0].type.startsWith('image/')) {
-                    var reader = new FileReader();
-                    reader.onload = function (e) {
-                        data.context.find('.preview').html('<img src="' + e.target.result + '">');
-                    };
-                    reader.readAsDataURL(data.files[0]);
-                }
-
-                data.context.find('.name').text(data.files[0].name);
-                data.context.find('.size').text((data.files[0].size / 1024).toFixed(2) + ' KB');
-
-                // Автоматически начинаем загрузку
-                data.submit();
-            },
-            progress: function (e, data) {
-                // Обновление прогресс-бара
-                var progress = parseInt(data.loaded / data.total * 100, 10);
-                data.context.find('.progress-bar').css('width', progress + '%');
-            },
-            done: function (e, data) {
-                // Обработка успешной загрузки
-                try {
-                    var result = data.result[0];
-                    if (result && result.draftitemid) {
-                        // Обновляем элемент - убираем прогресс, добавляем кнопку удаления
-                        var isImage = result.url && result.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-                        var previewHtml = '';
-                        if (isImage && result.url) {
-                            previewHtml = '<img src="' + result.url + '" alt="' + result.name + '">';
-                        } else {
-                            previewHtml = '<span style="font-size: 40px; color: #ccc;">📄</span>';
-                        }
-
-                        data.context.attr('data-draftitemid', result.draftitemid);
-                        data.context.html(
-                            '<div class="preview">' + previewHtml + '</div>' +
-                            '<div style="flex: 1;">' +
-                            '<div class="name">' + result.name + '</div>' +
-                            '<div class="size">' + (result.size / 1024).toFixed(2) + ' KB</div>' +
-                            '</div>' +
-                            '<button type="button" class="delete" data-draftitemid="' + result.draftitemid + '">Удалить</button>'
-                        );
-
-                        uploadedFiles.push({
-                            draftitemid: result.draftitemid,
-                            filename: result.name
-                        });
-                        updateHiddenField();
-                    }
-                } catch (e) {
-                    console.error('Ошибка парсинга ответа', e);
-                    data.context.remove();
-                }
-            },
-            fail: function (e, data) {
-                // Обработка ошибок
-                var errorMessage = 'Ошибка загрузки файла';
-                if (data.errorThrown) {
-                    errorMessage = data.errorThrown;
-                } else if (data.result && data.result[0] && data.result[0].error) {
-                    errorMessage = data.result[0].error;
-                }
-                showErrorModal(errorMessage);
-                data.context.remove();
+        // Функция инициализации виджета
+        function initBluimpWidget() {
+            // Проверяем, что jQuery загружен
+            if (typeof jQuery === 'undefined') {
+                console.error('[SlcorpFileBundle] jQuery is not loaded');
+                return false;
             }
-        }).on('fileuploadprocessalways', function (e, data) {
-            // Обработка ошибок валидации
-            if (data.files.error) {
-                showErrorModal(data.files[0].error);
+
+            // Проверяем, что Blueimp File Upload загружен
+            if (typeof jQuery.fn.fileupload === 'undefined') {
+                console.error('[SlcorpFileBundle] Blueimp File Upload plugin is not loaded');
+                return false;
             }
-        });
 
-        // Загружаем существующие файлы
-        if (fileData && Array.isArray(fileData) && fileData.length > 0) {
-            var $files = $('#bluimp-{{ field_id }} .files');
-            fileData.forEach(function (file) {
-                var isImage = file.mimetype && file.mimetype.startsWith('image/');
-                var previewHtml = '';
-                if (isImage && file.download_url) {
-                    previewHtml = '<img src="' + file.download_url + '" alt="' + file.filename + '">';
-                } else {
-                    previewHtml = '<span style="font-size: 40px; color: #ccc;">📄</span>';
-                }
+            // Проверяем, что наш виджет загружен
+            if (typeof window.SlcorpFileBundle === 'undefined' || typeof window.SlcorpFileBundle.BluimpWidget !== 'function') {
+                console.error('[SlcorpFileBundle] SlcorpFileBundle.BluimpWidget is not loaded');
+                return false;
+            }
 
-                var $fileItem = $('<div class="template-download" data-draftitemid="' + file.draftitemid + '">' +
-                    '<div class="preview">' + previewHtml + '</div>' +
-                    '<div style="flex: 1;">' +
-                    '<div class="name">' + file.filename + '</div>' +
-                    '<div class="size">' + (file.filesize / 1024).toFixed(2) + ' KB</div>' +
-                    '</div>' +
-                    '<button type="button" class="delete" data-draftitemid="' + file.draftitemid + '">Удалить</button>' +
-                    '</div>');
-                $files.append($fileItem);
-
-                uploadedFiles.push({
-                    draftitemid: file.draftitemid,
-                    filename: file.filename
-                });
-            });
-            updateHiddenField();
+            // Инициализируем виджет
+            try {
+                window.SlcorpFileBundle.BluimpWidget(widgetConfig);
+                return true;
+            } catch (e) {
+                console.error('[SlcorpFileBundle] Error initializing Bluimp widget:', e);
+                return false;
+            }
         }
 
-        // Обработчик удаления файла
-        $(document).on('click', '#bluimp-{{ field_id }} .delete', function () {
-            var draftitemid = $(this).data('draftitemid');
-            if (confirm('Вы уверены, что хотите удалить этот файл?')) {
-                uploadedFiles = uploadedFiles.filter(function (file) {
-                    return file.draftitemid !== draftitemid;
-                });
-                updateHiddenField();
-                $(this).closest('.template-upload, .template-download').remove();
-            }
-        });
+        // Инициализируем после загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initBluimpWidget);
+        } else {
+            // DOM уже загружен, инициализируем сразу
+            initBluimpWidget();
+        }
     })();
 </script>
-

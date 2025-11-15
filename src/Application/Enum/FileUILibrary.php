@@ -16,6 +16,5 @@ enum FileUILibrary: string
     case DROPZONE = 'dropzone';
     case JQUERY_FILE_UPLOAD = 'jquery_file_upload';
     case PLUPLOAD = 'plupload';
-    case UPLOADIFY = 'uploadify';
     case BLUIMP = 'bluimp';
 }
