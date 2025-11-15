@@ -66,9 +66,9 @@ abstract class BaseUploadController extends AbstractController implements Upload
         return [
             'component' => $request->request->get('component', 'default'),
             'filearea' => $request->request->get('filearea', 'default'),
-            'itemid' => (int)$request->request->get('itemid', 0),
-            'contextid' => (int)$request->request->get('contextid', 1),
-            'userid' => $request->request->get('userid') ? (int)$request->request->get('userid') : null,
+            'itemid' => (int) $request->request->get('itemid', 0),
+            'contextid' => (int) $request->request->get('contextid', 1),
+            'userid' => $request->request->get('userid') ? (int) $request->request->get('userid') : null,
         ];
     }
 
@@ -87,7 +87,7 @@ abstract class BaseUploadController extends AbstractController implements Upload
         // - itemid = уникальный draft ID (это и есть draftitemid!)
         return $this->fileService->createFileFromUploaded(
             $uploadedFile,
-            component: $params['component'],
+            component: 'user',
             filearea: 'draft', // DRAFT AREA!
             itemid: $draftItemId, // Уникальный ID draft'а
             contextid: $params['contextid'],
@@ -101,7 +101,7 @@ abstract class BaseUploadController extends AbstractController implements Upload
     protected function generateDraftItemId(): int
     {
         // Используем timestamp + random для уникальности
-        return (int)(time() . rand(1000, 9999));
+        return (int) (time() . rand(1000, 9999));
     }
 
     /**

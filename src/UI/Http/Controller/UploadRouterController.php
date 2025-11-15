@@ -44,12 +44,12 @@ readonly class UploadRouterController
 
         // Если все еще не указана, берем из глобального конфига
         if ($ui_library === 'fineuploader') {
-            /**@phpstan-ignore-next-line */
+            /* @phpstan-ignore-next-line */
             $ui_library = $this->parameterBag->get('slcorp_file.ui_library') ?? FileUILibrary::FINE_UPLOADER->value;
         }
 
         try {
-            $library = FileUILibrary::from((string)$ui_library);
+            $library = FileUILibrary::from((string) $ui_library);
         } catch (ValueError) {
             // Если библиотека не найдена, используем значение по умолчанию
             $library = FileUILibrary::FINE_UPLOADER;

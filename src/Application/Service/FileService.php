@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Slcorp\FileBundle\Application\Service;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Slcorp\FileBundle\Application\Event\PostPersistEvent;
 use Slcorp\FileBundle\Application\Event\PostUploadEvent;
 use Slcorp\FileBundle\Application\Event\PreUploadEvent;
@@ -26,7 +25,6 @@ readonly class FileService
         private ParameterBagInterface $parameterBag,
         private Filesystem $filesystem,
         private EventDispatcherInterface $eventDispatcher,
-        private EntityManagerInterface $entityManager,
         private UserRepositoryInterface $userRepository,
         private FileRepositoryInterface $fileRepository,
     ) {
@@ -108,9 +106,7 @@ readonly class FileService
         $postUploadEvent = new PostUploadEvent($uploadedFile, $file, $fullPath);
         $this->eventDispatcher->dispatch($postUploadEvent, PostUploadEvent::NAME);
 
-        // Сохраняем File entity в БД
-        $this->entityManager->persist($file);
-        $this->entityManager->flush();
+        $this->fileRepository->save($file);
 
         // Диспетчеризуем событие PostPersistEvent (после сохранения в БД)
         $postPersistEvent = new PostPersistEvent($file);
@@ -140,8 +136,8 @@ readonly class FileService
         // - component = тот же (для идентификации)
         // - filearea = 'draft'
         // - itemid = draftItemId
-        $file = $this->entityManager->getRepository(File::class)->findOneBy([
-            'component' => $component,
+        $file = $this->fileRepository->findOneBy([
+            'component' => 'user',
             'filearea' => 'draft',
             'itemid' => $draftItemId,
         ]);
@@ -151,13 +147,13 @@ readonly class FileService
         }
 
         // Перемещаем в permanent area
-        $file->setFilearea($filearea); // draft → avatar (например)
+        $file->setFilearea($filearea);
+        $file->setComponent($component);
         $file->setItemid($itemid); // draftItemId → user_id
         $file->setContextid($contextid);
         $file->setTimemodified(time());
 
-        $this->entityManager->persist($file);
-        $this->entityManager->flush();
+        $this->fileRepository->save($file);
 
         return $file;
     }
@@ -236,7 +232,7 @@ readonly class FileService
      */
     public function deleteFile(int $fileId, bool $flush = false): bool
     {
-        $file = $this->entityManager->getRepository(File::class)->find((int)$fileId);
+        $file = $this->fileRepository->find($fileId);
 
         if (!$file instanceof File) {
             return false;
@@ -245,15 +241,7 @@ readonly class FileService
         $contenthash = $file->getContenthash();
 
         // Проверяем, есть ли другие записи с таким же contenthash
-        $otherFilesCount = $this->entityManager->getRepository(File::class)
-            ->createQueryBuilder('f')
-            ->select('COUNT(f.id)')
-            ->where('f.contenthash = :contenthash')
-            ->andWhere('f.id != :fileId')
-            ->setParameter('contenthash', $contenthash)
-            ->setParameter('fileId', $file->getId())
-            ->getQuery()
-            ->getSingleScalarResult();
+        $otherFilesCount = $this->fileRepository->getCountSameFiles($contenthash, $file->getId());
 
         // Удаляем физический файл только если нет других записей с таким же contenthash
         if ($otherFilesCount === 0) {
@@ -266,12 +254,7 @@ readonly class FileService
             }
         }
 
-        // Удаляем запись из БД
-        $this->entityManager->remove($file);
-
-        if ($flush) {
-            $this->entityManager->flush();
-        }
+        $this->fileRepository->delete($file, $flush);
 
         return true;
     }
@@ -280,23 +263,13 @@ readonly class FileService
      * Удаляет старые файлы из draft area.
      *
      * @param int $olderThanDays Удалять файлы старше указанного количества дней
-     * @param string $component Компонент (по умолчанию 'user')
      * @return int Количество удаленных файлов
      */
-    public function deleteOldDraftFiles(int $olderThanDays = 7, string $component = 'user'): int
+    public function deleteOldDraftFiles(int $olderThanDays = 7): int
     {
         $timestamp = time() - ($olderThanDays * 24 * 60 * 60);
 
-        $draftFiles = $this->entityManager->getRepository(File::class)
-            ->createQueryBuilder('f')
-            ->where('f.component = :component')
-            ->andWhere('f.filearea = :filearea')
-            ->andWhere('f.timecreated < :timestamp')
-            ->setParameter('component', $component)
-            ->setParameter('filearea', 'draft')
-            ->setParameter('timestamp', $timestamp)
-            ->getQuery()
-            ->getResult();
+        $draftFiles = $this->fileRepository->getFilesOlderThen($timestamp);
 
         $deletedCount = 0;
         $contenthashesToCheck = [];
@@ -306,15 +279,7 @@ readonly class FileService
 
             // Проверяем, есть ли другие записи с таким же contenthash (включая другие draft файлы)
             // Используем ID текущего файла, чтобы не учитывать его при подсчете
-            $otherFilesCount = $this->entityManager->getRepository(File::class)
-                ->createQueryBuilder('f')
-                ->select('COUNT(f.id)')
-                ->where('f.contenthash = :contenthash')
-                ->andWhere('f.id != :fileId')
-                ->setParameter('contenthash', $contenthash)
-                ->setParameter('fileId', $file->getId())
-                ->getQuery()
-                ->getSingleScalarResult();
+            $otherFilesCount = $this->fileRepository->getCountSameFiles($contenthash, $file->getId());
 
             // Удаляем физический файл только если нет других записей с таким же contenthash
             // и мы еще не проверяли этот contenthash
@@ -331,11 +296,11 @@ readonly class FileService
             }
 
             // Удаляем запись из БД
-            $this->entityManager->remove($file);
+            $this->fileRepository->delete($file, false);
             $deletedCount++;
         }
 
-        $this->entityManager->flush();
+        $this->fileRepository->flush();
 
         return $deletedCount;
     }
@@ -354,5 +319,37 @@ readonly class FileService
         $level3 = mb_substr($hash, 4, 2);
 
         return $level1 . '/' . $level2 . '/' . $level3 . '/' . $hash;
+    }
+
+    /**
+     * Нормализует значение в массив ID файлов.
+     * Поддерживает: массив, строку с разделителями (запятая, пробел), одиночное значение.
+     */
+    public function normalizeToArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return array_filter(array_map('intval', $value));
+        }
+
+        if (is_string($value)) {
+            // Пробуем JSON
+            $decoded = json_decode($value, true);
+            if (json_last_error() === \JSON_ERROR_NONE && is_array($decoded)) {
+                return array_filter(array_map('intval', $decoded));
+            }
+
+            // Пробуем разделители (запятая, пробел, точка с запятой)
+            $parts = preg_split('/[,;\s]+/', $value, -1, \PREG_SPLIT_NO_EMPTY);
+            if (empty($parts)) {
+                return [];
+            }
+
+            return array_filter(array_map('intval', $parts));
+        }
+
+        // Одиночное значение
+        $intValue = is_numeric($value) ? (int) $value : null;
+
+        return $intValue !== null ? [$intValue] : [];
     }
 }

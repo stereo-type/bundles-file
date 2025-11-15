@@ -11,4 +11,12 @@ use Slcorp\CoreBundle\Domain\Repository\RepositoryInterface;
  */
 interface FileRepositoryInterface extends RepositoryInterface
 {
+    public function flush(): void;
+
+    public function getCountSameFiles(string $contenthash, int $excludeId): int;
+
+    /**
+     * @return File[]
+     */
+    public function getFilesOlderThen(int $timestamp, string $component = 'user', string $filearea = 'draft'): array;
 }

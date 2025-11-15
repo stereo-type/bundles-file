@@ -50,7 +50,7 @@ class SlcorpFileExtension extends Extension implements PrependExtensionInterface
         // Обработка конфигурации валидации
         $validationConfig = $config['validation'] ?? [];
         $allowedMimeTypes = $validationConfig['mime_types'] ?? [];
-        $maxSize = $this->parseMaxSize($validationConfig['max_size'] ?? null);
+        $maxSize = $this->parseMaxSize($validationConfig['max_size'] ?? '20M');
         $maxFiles = $validationConfig['max_files'] ?? 1;
 
         // Сохраняем настройки валидации как параметры для использования в формах
@@ -126,19 +126,19 @@ class SlcorpFileExtension extends Extension implements PrependExtensionInterface
 
         // Если уже число, возвращаем как есть
         if (is_numeric($maxSize)) {
-            return (int)$maxSize;
+            return (int) $maxSize;
         }
 
         // Парсим строку с суффиксом
         $maxSize = mb_trim($maxSize);
         $unit = mb_strtoupper(mb_substr($maxSize, -1));
-        $value = (int)mb_substr($maxSize, 0, -1);
+        $value = (int) mb_substr($maxSize, 0, -1);
 
         return match ($unit) {
             'K' => $value * 1024,
             'M' => $value * 1024 * 1024,
             'G' => $value * 1024 * 1024 * 1024,
-            default => (int)$maxSize,
+            default => (int) $maxSize,
         };
     }
 }

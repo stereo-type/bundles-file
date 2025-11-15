@@ -38,13 +38,6 @@ class CleanupOldDraftFilesCommand extends Command
                 InputOption::VALUE_OPTIONAL,
                 'Удалять файлы старше указанного количества дней',
                 7
-            )
-            ->addOption(
-                'component',
-                'c',
-                InputOption::VALUE_OPTIONAL,
-                'Компонент для очистки (по умолчанию "user")',
-                'user'
             );
     }
 
@@ -52,8 +45,7 @@ class CleanupOldDraftFilesCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $days = (int)$input->getOption('days');
-        $component = (string)$input->getOption('component');
+        $days = (int) $input->getOption('days');
 
         if ($days < 1) {
             $io->error('Количество дней должно быть больше 0');
@@ -61,10 +53,10 @@ class CleanupOldDraftFilesCommand extends Command
             return Command::FAILURE;
         }
 
-        $io->info(sprintf('Начинаем очистку draft файлов старше %d дней для компонента "%s"...', $days, $component));
+        $io->info(sprintf('Начинаем очистку draft файлов старше %d дней "...', $days));
 
         try {
-            $deletedCount = $this->fileService->deleteOldDraftFiles($days, $component);
+            $deletedCount = $this->fileService->deleteOldDraftFiles($days);
 
             if ($deletedCount > 0) {
                 $io->success(sprintf('Удалено файлов: %d', $deletedCount));

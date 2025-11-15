@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Slcorp\FileBundle\Application\Form\Type;
 
-use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Slcorp\FileBundle\Application\Enum\FileAdapter;
@@ -27,13 +26,14 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * @copyright  2024 Zhalayletdinov Vyacheslav evil_tut@mail.ru
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * @extends AbstractType<mixed>
  */
 class UniversalFileType extends AbstractType
 {
     public function __construct(
         private readonly ParameterBagInterface $parameterBag,
         private readonly FileService $fileService,
-        private readonly EntityManagerInterface $entityManager,
         private readonly Security $security,
         private readonly LoggerInterface $logger,
         private readonly FileRepositoryInterface $fileRepository
@@ -49,10 +49,9 @@ class UniversalFileType extends AbstractType
         if ($uiLibrary instanceof FileUILibrary) {
             $uiLibrary = $uiLibrary->value;
         } elseif ($uiLibrary === null) {
-            $uiLibrary = $this->parameterBag->get('slcorp_file.ui_library') ?? 'fineuploader';
+            $uiLibrary = $this->parameterBag->get('slcorp_file.ui_library') ?: 'fineuploader';
         }
         $user = $this->security->getUser();
-        /** @var object|null $user */
         $userId = $options['userid'] ?? ($user && method_exists($user, 'getId') ?
             $user->getId() : null);
         // Устанавливаем переменные для шаблона
@@ -63,6 +62,7 @@ class UniversalFileType extends AbstractType
         $builder->setAttribute('contextid', $options['contextid'] ?? 1);
         $builder->setAttribute('userid', $userId);
 
+        /*@phpstan-ignore-next-line */
         $adapterString = $options['adapter']?->value ?? $this->parameterBag->get('slcorp_file.adapter');
         $adapter = is_string($adapterString) ? FileAdapter::from($adapterString) : $adapterString;
 
@@ -71,24 +71,28 @@ class UniversalFileType extends AbstractType
             if ($options['mapped'] ?? true) {
                 throw new InvalidArgumentException('Параметры "component" и "filearea" обязательны для UniversalFileType');
             }
-            // Если mapped = false и параметры не указаны - просто не добавляем трансформер
+        // Если mapped = false и параметры не указаны - просто не добавляем трансформер
         } else {
             // Получаем maxFiles из атрибутов или конфига
+            /*@phpstan-ignore-next-line */
             $maxFiles = $options['attr']['data-max-files'] ?? $this->parameterBag->get('slcorp_file.validation.max_files') ?? 1;
-            $maxFiles = is_numeric($maxFiles) ? (int)$maxFiles : 1;
+            $maxFiles = is_numeric($maxFiles) ? (int) $maxFiles : 1;
 
             // Переменная для хранения формы и оригинального значения
             $formRef = null;
             $originalValueRef = null;
+            // Счетчик вызовов transform
+            $transformCallCount = 0;
 
             // Сохраняем оригинальное значение для трансформера через PRE_SET_DATA
-            $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use (&$formRef, &$originalValueRef, $logger) {
+            $builder->addEventListener(FormEvents::PRE_SET_DATA, static function (FormEvent $event) use (&$formRef, &$originalValueRef, &$transformCallCount, $logger) {
                 $logger->debug('PRE_SET_DATA form UniversalFileType');
                 $value = $event->getData();
                 $form = $event->getForm();
                 $formRef = $form;
                 // Сохраняем оригинальное значение для трансформера
                 $originalValueRef = $value;
+                $transformCallCount++;
             });
 
             // Добавляем трансформер в зависимости от адаптера
@@ -109,10 +113,14 @@ class UniversalFileType extends AbstractType
                 return $originalValueRef;
             };
 
+            // Создаем замыкание для получения и увеличения счетчика вызовов
+            $transformCallCounter = static function () use (&$transformCallCount) {
+                return $transformCallCount;
+            };
+
             $transformer = new UniversalFileTransformer(
-            //                $adapter,
                 $this->fileService,
-                $this->entityManager,
+                $this->fileRepository,
                 $this->logger,
                 $options['component'],
                 $options['filearea'],
@@ -123,7 +131,8 @@ class UniversalFileType extends AbstractType
                     return $formRef?->getParent()?->getData();
                 },
                 $maxFiles,
-                $originalValueResolver
+                $originalValueResolver,
+                $transformCallCounter
             );
 
             $builder->addModelTransformer($transformer);
@@ -144,15 +153,15 @@ class UniversalFileType extends AbstractType
 
         // Получаем настройки валидации из конфига (если не переопределены в атрибутах)
         if (!isset($view->vars['attr']['data-allowed-extensions'])) {
-            $allowedMimeTypes = $this->parameterBag->get('slcorp_file.validation.mime_types') ?? [];
-            if (!empty($allowedMimeTypes) && is_array($allowedMimeTypes)) {
+            $allowedMimeTypes = $this->parameterBag->get('slcorp_file.validation.mime_types') ?: [];
+            if (!empty($allowedMimeTypes)) {
                 // Преобразуем MIME типы в формат для Dropzone/FineUploader
                 $view->vars['attr']['data-allowed-extensions'] = implode(',', $allowedMimeTypes);
             }
         }
 
         if (!isset($view->vars['attr']['data-max-size'])) {
-            $maxSize = $this->parameterBag->get('slcorp_file.validation.max_size') ?? null;
+            $maxSize = $this->parameterBag->get('slcorp_file.validation.max_size');
             if ($maxSize) {
                 // Парсим размер в байты
                 $view->vars['attr']['data-max-size'] = $this->parseMaxSizeToBytes($maxSize);
@@ -160,8 +169,8 @@ class UniversalFileType extends AbstractType
         }
 
         if (!isset($view->vars['attr']['data-max-files'])) {
-            $maxFiles = $this->parameterBag->get('slcorp_file.validation.max_files') ?? 1;
-            $view->vars['attr']['data-max-files'] = (int)$maxFiles;
+            $maxFiles = $this->parameterBag->get('slcorp_file.validation.max_files') ?: 1;
+            $view->vars['attr']['data-max-files'] = (int) $maxFiles;
         }
 
         // Если есть значение (draft itemid или массив), загружаем информацию о файлах для превью
@@ -170,11 +179,11 @@ class UniversalFileType extends AbstractType
             $component = $config->getAttribute('component');
 
             // Нормализуем значение в массив draft itemid (работает и со строкой, и с массивом)
-            $draftItemIds = $this->normalizeToArray($view->vars['value']);
+            $draftItemIds = $this->fileService->normalizeToArray($view->vars['value']);
 
             foreach ($draftItemIds as $draftItemId) {
                 // Ищем файл в draft area по itemid (это и есть draft itemid)
-                $file = $this->entityManager->getRepository(File::class)->findOneBy(
+                $file = $this->fileRepository->findOneBy(
                     [
                         'component' => $component,
                         'filearea' => 'draft',
@@ -200,35 +209,6 @@ class UniversalFileType extends AbstractType
     }
 
     /**
-     * Нормализует значение в массив ID файлов.
-     * Поддерживает: массив, строку с разделителями (запятая, пробел), одиночное значение.
-     */
-    private function normalizeToArray($value): array
-    {
-        if (is_array($value)) {
-            return array_filter(array_map('intval', $value));
-        }
-
-        if (is_string($value)) {
-            // Пробуем JSON
-            $decoded = json_decode($value, true);
-            if (json_last_error() === \JSON_ERROR_NONE && is_array($decoded)) {
-                return array_filter(array_map('intval', $decoded));
-            }
-
-            // Пробуем разделители (запятая, пробел, точка с запятой)
-            $parts = preg_split('/[,;\s]+/', $value, -1, \PREG_SPLIT_NO_EMPTY);
-
-            return array_filter(array_map('intval', $parts));
-        }
-
-        // Одиночное значение
-        $intValue = is_numeric($value) ? (int)$value : null;
-
-        return $intValue !== null ? [$intValue] : [];
-    }
-
-    /**
      * Парсит размер файла из строки (например, "2M", "500K", "1G") в байты.
      */
     private function parseMaxSizeToBytes(string|int $maxSize): int
@@ -238,97 +218,25 @@ class UniversalFileType extends AbstractType
         }
 
         if (is_numeric($maxSize)) {
-            return (int)$maxSize;
+            return (int) $maxSize;
         }
 
         // Парсим строку с суффиксом
         $maxSize = mb_trim($maxSize);
         $unit = mb_strtoupper(mb_substr($maxSize, -1));
-        $value = (int)mb_substr($maxSize, 0, -1);
+        $value = (int) mb_substr($maxSize, 0, -1);
 
         return match ($unit) {
             'K' => $value * 1024,
             'M' => $value * 1024 * 1024,
             'G' => $value * 1024 * 1024 * 1024,
-            default => (int)$maxSize,
+            default => (int) $maxSize,
         };
-    }
-
-    /**
-     * Копирует файл из permanent area в draft area.
-     *
-     * @param int $fileId ID файла в permanent area
-     * @param string $component Компонент
-     * @param string $filearea Область файла
-     * @param int $contextid ID контекста
-     * @param int|null $userid ID пользователя
-     * @return string|null Draft itemid или null, если файл не найден
-     */
-    private function copyFileToDraft(int $fileId, string $component, string $filearea, int $contextid, ?int $userid): ?string
-    {
-        // Ищем файл в permanent area
-        $permanentFile = $this->entityManager->getRepository(File::class)->find($fileId);
-
-        if (!$permanentFile instanceof File) {
-            // Файл не найден
-            return null;
-        }
-
-        // Удаляем старые draft копии этого файла, если они есть
-        $existingDrafts = $this->entityManager->getRepository(File::class)->findBy([
-            'component' => 'user',
-            'filearea' => 'draft',
-            'referencefileid' => $fileId,
-        ]);
-
-        foreach ($existingDrafts as $existingDraft) {
-            if ($existingDraft instanceof File) {
-                $this->fileService->deleteFile($existingDraft->getId());
-            }
-        }
-
-        // Генерируем новый draft itemid
-        $draftItemId = $this->generateDraftItemId();
-
-        // Копируем файл в draft
-        $draftFile = $this->fileService->copyToDraft($fileId, $draftItemId);
-
-        if (!$draftFile instanceof File) {
-            // Не удалось скопировать - возвращаем сгенерированный draft itemid
-            return (string)$draftItemId;
-        }
-
-        return (string)$draftFile->getItemid();
-    }
-
-    /**
-     * Создает пустой draft файл в базе данных.
-     * Используется когда файла нет, но нужно создать draft для виджета.
-     *
-     * @param int|string|null $userid ID пользователя
-     * @return int Draft itemid
-     */
-    private function createEmptyDraftFile(int|string|null $userid): int
-    {
-        // Создаем новый пустой draft файл
-        $draftItemId = $this->generateDraftItemId();
-
-        $this->fileService->createEmptyDraftFile($draftItemId, is_numeric($userid) ? (int)$userid : null);
-
-        return $draftItemId;
-    }
-
-    /**
-     * Генерирует уникальный draft item ID.
-     */
-    private function generateDraftItemId(): int
-    {
-        return (int)(time() . random_int(1000, 9999));
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $uiLibraryDefault = $this->parameterBag->get('slcorp_file.ui_library') ?? 'fineuploader';
+        $uiLibraryDefault = $this->parameterBag->get('slcorp_file.ui_library') ?: 'fineuploader';
         $resolver->setDefaults([
             'required' => false,
             'mapped' => true, // По умолчанию привязано к модели

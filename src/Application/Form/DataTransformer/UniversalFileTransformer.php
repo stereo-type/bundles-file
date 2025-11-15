@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Slcorp\FileBundle\Application\Form\DataTransformer;
 
 use Closure;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Slcorp\FileBundle\Application\Enum\FileAdapter;
 use Slcorp\FileBundle\Application\Service\FileService;
 use Slcorp\FileBundle\Domain\Entity\File;
+use Slcorp\FileBundle\Domain\Entity\FileRepositoryInterface;
 use Symfony\Component\Form\DataTransformerInterface;
 use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -19,8 +18,7 @@ use Throwable;
  * @copyright  2024 Zhalayletdinov Vyacheslav evil_tut@mail.ru
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
- *
- *
+ * @implements DataTransformerInterface<int|string|array<int>|null, string|array<string>|null>
  */
 class UniversalFileTransformer implements DataTransformerInterface
 {
@@ -31,7 +29,7 @@ class UniversalFileTransformer implements DataTransformerInterface
 
     public function __construct(
         private readonly FileService $fileService,
-        private readonly EntityManagerInterface $entityManager,
+        private readonly FileRepositoryInterface $fileRepository,
         private readonly LoggerInterface $logger,
         private readonly string $component,
         private readonly string $filearea,
@@ -42,15 +40,37 @@ class UniversalFileTransformer implements DataTransformerInterface
         private readonly int $maxFiles = 1,
         // Для определения типа возвращаемого значения
         private readonly ?Closure $originalValueResolver = null,
+        // Счетчик вызовов transform
+        private readonly ?Closure $transformCallCounter = null,
     ) {
     }
 
     /**
+     * Вызывается при билде формы
      * Преобразует значение из модели (ID файла/файлов) в значение для view.
      * Создает draft файлы, если их еще нет.
+     *
+     * @return string|string[]|null
      */
     public function transform($value): mixed
     {
+        // Получаем счетчик вызовов
+        $callCount = 0;
+        if ($this->transformCallCounter !== null) {
+            $callCount = ($this->transformCallCounter)();
+        }
+
+        // Выполняем логику только при втором вызове (callCount === 2)
+        if ($callCount < 2) {
+            $this->logger->debug(sprintf('UniversalFileTransformer::transform() - вызов #%d, пропускаем логику', $callCount));
+            if ($value === null) {
+                return null;
+            }
+
+            // При первом вызове просто возвращаем значение как есть
+            return is_array($value) ? array_map('strval', $value) : (string)$value;
+        }
+
         // Получаем оригинальное значение из атрибута формы (если доступно)
         if ($this->originalValueResolver !== null) {
             $originalValue = ($this->originalValueResolver)();
@@ -67,139 +87,116 @@ class UniversalFileTransformer implements DataTransformerInterface
 
         // Если значение null или пустое - не создаем draft файл, просто возвращаем null
         // Это защита от создания draft при первом вызове с null
+        $this->logger->warning((string)$this->originalValue);
         if ($value === null || $value === '' || $value === 0 || $value === '0') {
             $this->logger->debug('UniversalFileTransformer::transform() - значение null/пустое, пропускаем создание draft');
+
             return null;
         }
 
         // Нормализуем значение в массив ID файлов
-        $fileIds = $this->normalizeToArray($value);
+        $fileIds = $this->fileService->normalizeToArray($value);
         $draftItemIds = [];
 
-        // Проверяем, не является ли значение уже draft itemid
-        $isDraftValue = false;
-        if (!empty($fileIds)) {
-            // Проверяем первый ID - если это draft файл, значит значение уже обработано
-            $firstId = reset($fileIds);
-            $existingDraft = $this->entityManager->getRepository(File::class)->findOneBy([
-                'component' => 'user',
-                'filearea' => 'draft',
-                'itemid' => $firstId,
-                'userid' => $this->userid,
-            ]);
-            if ($existingDraft instanceof File) {
-                $isDraftValue = true;
-                $this->logger->debug(
-                    sprintf(
-                        'Значение уже является draft itemid (%d), используем существующий (повторный вызов transform)',
-                        $firstId
-                    )
-                );
-                $draftItemIds = array_map('strval', $fileIds);
-            }
-        }
+        //        // Проверяем, не является ли значение уже draft itemid
+        //        $isDraftValue = false;
+        //        if (!empty($fileIds)) {
+        //            // Проверяем первый ID - если это draft файл, значит значение уже обработано
+        //            $firstId = reset($fileIds);
+        //            $existingDraft = $this->entityManager->getRepository(File::class)->findOneBy([
+        //                'component' => 'user',
+        //                'filearea' => 'draft',
+        //                'itemid' => $firstId,
+        //                'userid' => $this->userid,
+        //            ]);
+        //            if ($existingDraft instanceof File) {
+        //                $isDraftValue = true;
+        //                $this->logger->debug(
+        //                    sprintf(
+        //                        'Значение уже является draft itemid (%d), используем существующий (повторный вызов transform)',
+        //                        $firstId
+        //                    )
+        //                );
+        //                $draftItemIds = array_map('strval', $fileIds);
+        //            }
+        //        }
 
-        if (!$isDraftValue) {
-            if (empty($fileIds)) {
-                // Файла нет - создаем пустой draft файл
-                $this->logger->debug('Файла нет - создаем пустой draft файл');
-                $draftItemId = $this->generateDraftItemId();
-                $this->fileService->createEmptyDraftFile($draftItemId, $this->userid);
-                $draftItemIds[] = (string)$draftItemId;
-                $this->logger->debug(sprintf('Создан пустой draft файл с itemid: %d', $draftItemId));
-            } else {
-                // Есть файлы - копируем каждый в draft
-                $this->logger->debug(sprintf('Есть файлы, переносим их в драфт: %d - %s', count($fileIds), json_encode($fileIds) ?: ''));
-                foreach ($fileIds as $fileId) {
-                    // Проверяем, есть ли уже draft файл для этого оригинального файла
-                    $existingDraft = $this->entityManager->getRepository(File::class)->findOneBy([
-                        'component' => 'user',
-                        'filearea' => 'draft',
-                        'referencefileid' => $fileId,
-                        'userid' => $this->userid,
-                    ]);
+        //        if (!$isDraftValue) {
+        if (empty($fileIds)) {
+            // Файла нет - создаем пустой draft файл
+            $this->logger->debug('Файла нет - создаем пустой draft файл');
+            $draftItemId = $this->generateDraftItemId();
+            $this->fileService->createEmptyDraftFile($draftItemId, $this->userid);
+            $draftItemIds[] = (string)$draftItemId;
+            $this->logger->debug(sprintf('Создан пустой draft файл с itemid: %d', $draftItemId));
+        } else {
+            // Есть файлы - копируем каждый в draft
+            $this->logger->debug(sprintf('Есть файлы, переносим их в драфт: %d - %s', count($fileIds), json_encode($fileIds) ?: ''));
+            foreach ($fileIds as $fileId) {
+                // Проверяем, есть ли уже draft файл для этого оригинального файла
+                $existingDraft = $this->fileRepository->findOneBy([
+                    'component' => 'user',
+                    'filearea' => 'draft',
+                    'referencefileid' => $fileId,
+                    'userid' => $this->userid,
+                ]);
 
-                    if ($existingDraft instanceof File) {
-                        // Draft уже существует - используем его
-                        $draftItemId = (string)$existingDraft->getItemid();
+                if ($existingDraft instanceof File) {
+                    // Draft уже существует - используем его
+                    $draftItemId = (string)$existingDraft->getItemid();
+                    $draftItemIds[] = $draftItemId;
+                    $this->logger->debug(
+                        sprintf(
+                            'Найден существующий draft для файла %d, используем itemid: %s (повторный вызов transform)',
+                            $fileId,
+                            $draftItemId
+                        )
+                    );
+                } else {
+                    // Draft не найден - создаем новый
+                    $draftItemId = $this->copyFileToDraft($fileId);
+                    if ($draftItemId !== null) {
                         $draftItemIds[] = $draftItemId;
-                        $this->logger->debug(
-                            sprintf(
-                                'Найден существующий draft для файла %d, используем itemid: %s (повторный вызов transform)',
-                                $fileId,
-                                $draftItemId
-                            )
-                        );
+                        $this->logger->debug(sprintf('Скопирован файл %d в draft с itemid: %s', $fileId, $draftItemId));
                     } else {
-                        // Draft не найден - создаем новый
-                        $draftItemId = $this->copyFileToDraft($fileId);
-                        if ($draftItemId !== null) {
-                            $draftItemIds[] = $draftItemId;
-                            $this->logger->debug(sprintf('Скопирован файл %d в draft с itemid: %s', $fileId, $draftItemId));
-                        } else {
-                            $this->logger->debug('Файл не удалось переместить в драфт, создаем пустой draft файл');
-                            $draftItemId = $this->generateDraftItemId();
-                            $this->fileService->createEmptyDraftFile($draftItemId, $this->userid);
-                            $draftItemIds[] = (string)$draftItemId;
-                            $this->logger->debug(sprintf('Создан пустой draft файл с itemid: %d (файл %d не найден)', $draftItemId, $fileId));
-                        }
+                        $this->logger->debug('Файл не удалось переместить в драфт, создаем пустой draft файл');
+                        $draftItemId = $this->generateDraftItemId();
+                        $this->fileService->createEmptyDraftFile($draftItemId, $this->userid);
+                        $draftItemIds[] = (string)$draftItemId;
+                        $this->logger->debug(sprintf('Создан пустой draft файл с itemid: %d (файл %d не найден)', $draftItemId, $fileId));
                     }
                 }
             }
         }
+        //        }
 
         // Возвращаем draft itemid (строку или массив в зависимости от maxFiles)
-        return $this->maxFiles === 1 ? ($draftItemIds[0] ?? null) : $draftItemIds;
+        if ($this->maxFiles === 1) {
+            return reset($draftItemIds);
+        }
+
+        return $draftItemIds;
     }
 
     /**
-     * Нормализует значение в массив ID файлов.
-     * Поддерживает: массив, строку с разделителями (запятая, пробел), одиночное значение.
-     */
-    private function normalizeToArray(mixed $value): array
-    {
-        if (is_array($value)) {
-            return array_filter(array_map('intval', $value));
-        }
-
-        if (is_string($value)) {
-            // Пробуем JSON
-            $decoded = json_decode($value, true);
-            if (json_last_error() === \JSON_ERROR_NONE && is_array($decoded)) {
-                return array_filter(array_map('intval', $decoded));
-            }
-
-            // Пробуем разделители (запятая, пробел, точка с запятой)
-            $parts = preg_split('/[,;\s]+/', $value, -1, \PREG_SPLIT_NO_EMPTY);
-            if (!$parts) {
-                return [];
-            }
-
-            return array_filter(array_map('intval', $parts));
-        }
-
-        // Одиночное значение
-        $intValue = is_numeric($value) ? (int)$value : null;
-
-        return $intValue !== null ? [$intValue] : [];
-    }
-
-    /**
+     * Вызывается при сабмите формы
      * Преобразует значение из view (массив/строку ID файлов или UploadedFile) обратно в модель.
      *
      * Поддерживает два режима:
      * 1. JS загрузчики (Dropzone, etc.) - файлы загружаются через AJAX, возвращается массив draft itemid
      * 2. Стандартная загрузка - файл приходит как UploadedFile
+     *
+     * @return string|string[]|null
      */
     public function reverseTransform($value): mixed
     {
         // Если пустое значение - проверяем, нужно ли удалить старый файл
         if ($value === null || $value === '') {
             // Если было значение, а теперь стало null - удаляем старый файл
-            if ($this->originalValue !== null &&
-                $this->originalValue !== '' &&
-                $this->originalValue !== 0 &&
-                $this->originalValue !== '0') {
+            if ($this->originalValue !== null
+                && $this->originalValue !== ''
+                && $this->originalValue !== 0
+                && $this->originalValue !== '0') {
                 $this->deleteOriginalFiles();
             }
 
@@ -207,14 +204,14 @@ class UniversalFileTransformer implements DataTransformerInterface
         }
 
         // Нормализуем значение в массив (виджет всегда отправляет массив, даже для одного файла)
-        $draftItemIds = $this->normalizeToArray($value);
+        $draftItemIds = $this->fileService->normalizeToArray($value);
 
         if (empty($draftItemIds)) {
             // Если было значение, а теперь стало пустым - удаляем старые файлы
-            if ($this->originalValue !== null &&
-                $this->originalValue !== '' &&
-                $this->originalValue !== 0 &&
-                $this->originalValue !== '0') {
+            if ($this->originalValue !== null
+                && $this->originalValue !== ''
+                && $this->originalValue !== 0
+                && $this->originalValue !== '0') {
                 $this->deleteOriginalFiles();
             }
 
@@ -225,7 +222,7 @@ class UniversalFileTransformer implements DataTransformerInterface
 
         foreach ($draftItemIds as $draftItemId) {
             // Проверяем - это draft файл?
-            $draftFile = $this->entityManager->getRepository(File::class)->findOneBy([
+            $draftFile = $this->fileRepository->findOneBy([
                 'component' => 'user',
                 'filearea' => 'draft',
                 'userid' => $this->userid,
@@ -246,7 +243,7 @@ class UniversalFileTransformer implements DataTransformerInterface
 
         // Если файлы изменились - удаляем старые файлы, которых нет в новом списке
         $newFileIds = array_map('intval', $fileIds);
-        $originalFileIds = $this->normalizeToArray($this->originalValue);
+        $originalFileIds = $this->fileService->normalizeToArray($this->originalValue);
 
         // Находим файлы, которые были удалены
         $deletedFileIds = array_diff($originalFileIds, $newFileIds);
@@ -257,7 +254,7 @@ class UniversalFileTransformer implements DataTransformerInterface
         // Если maxFiles = 1, возвращаем строку (первый ID) для совместимости с полями типа string
         // Если maxFiles > 1, возвращаем массив
         if ($this->maxFiles === 1) {
-            return !empty($fileIds) ? $fileIds[0] : null;
+            return !empty($fileIds) ? reset($fileIds) : null;
         }
 
         // Возвращаем массив ID для множественных файлов
@@ -270,18 +267,18 @@ class UniversalFileTransformer implements DataTransformerInterface
     private function deleteOriginalFiles(): void
     {
         if (
-            $this->originalValue === null ||
-            $this->originalValue === '' ||
-            $this->originalValue === 0 ||
-            $this->originalValue === '0') {
+            $this->originalValue === null
+            || $this->originalValue === ''
+            || $this->originalValue === 0
+            || $this->originalValue === '0') {
             return;
         }
 
-        $fileIds = $this->normalizeToArray($this->originalValue);
+        $fileIds = $this->fileService->normalizeToArray($this->originalValue);
 
         foreach ($fileIds as $fileId) {
             // Проверяем, что файл существует и относится к нужному компоненту и filearea
-            $file = $this->entityManager->getRepository(File::class)->findOneBy([
+            $file = $this->fileRepository->findOneBy([
                 'id' => $fileId,
                 'component' => $this->component,
                 'filearea' => $this->filearea,
@@ -303,7 +300,7 @@ class UniversalFileTransformer implements DataTransformerInterface
     private function copyFileToDraft(int $fileId): ?string
     {
         // Ищем файл в permanent area
-        $permanentFile = $this->entityManager->getRepository(File::class)->find($fileId);
+        $permanentFile = $this->fileRepository->find($fileId);
 
         if (!$permanentFile instanceof File) {
             // Файл не найден
@@ -311,16 +308,14 @@ class UniversalFileTransformer implements DataTransformerInterface
         }
 
         // Удаляем старые draft копии этого файла, если они есть
-        $existingDrafts = $this->entityManager->getRepository(File::class)->findBy([
+        $existingDrafts = $this->fileRepository->findBy([
             'component' => 'user',
             'filearea' => 'draft',
             'referencefileid' => $fileId,
         ]);
 
         foreach ($existingDrafts as $existingDraft) {
-            if ($existingDraft instanceof File) {
-                $this->fileService->deleteFile($existingDraft->getId());
-            }
+            $this->fileService->deleteFile($existingDraft->getId());
         }
 
         // Генерируем новый draft itemid
@@ -353,6 +348,7 @@ class UniversalFileTransformer implements DataTransformerInterface
      */
     private function moveFromDraftArea(int $draftItemId): ?string
     {
+        $this->logger->debug(sprintf('Перемещает файл из draft area в permanent area $draftItemId= %d', $draftItemId));
         try {
             // Получаем реальный itemid из данных формы (ID сущности)
             $itemid = $this->itemid;
