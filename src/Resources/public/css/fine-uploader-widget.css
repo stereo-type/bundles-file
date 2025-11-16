@@ -3,11 +3,9 @@
 .slcorp-file-uploader.fineuploader-wrapper {
     font-family: Arial, sans-serif;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-uploader {
     min-height: 200px;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-button {
     display: inline-block;
     padding: 10px 20px;
@@ -19,17 +17,14 @@
     font-size: 16px;
     transition: background 0.2s;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-button:hover {
     background: #0056b3;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-list {
     list-style: none;
     padding: 0;
     margin: 20px 0 0 0;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-list li {
     display: flex;
     align-items: center;
@@ -40,7 +35,6 @@
     background: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-thumbnail-wrapper {
     width: 80px;
     height: 80px;
@@ -53,30 +47,25 @@
     justify-content: center;
     flex-shrink: 0;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-thumbnail-wrapper img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-file-info {
     flex: 1;
     min-width: 0;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-file-name {
     font-weight: 500;
     margin-bottom: 5px;
     word-break: break-word;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-file-size {
     color: #666;
     font-size: 14px;
     margin-bottom: 10px;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-progress-bar {
     width: 100%;
     height: 6px;
@@ -85,36 +74,30 @@
     overflow: hidden;
     margin-bottom: 10px;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-progress-bar .qq-progress-bar-container {
     height: 100%;
     background: #007bff;
     transition: width 0.3s;
     border-radius: 3px;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-status-text {
     margin-left: 15px;
     padding: 5px 10px;
     border-radius: 4px;
     font-size: 12px;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-status-text.qq-upload-status-uploading {
     background: #fff3cd;
     color: #856404;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-status-text.qq-upload-status-success {
     background: #d4edda;
     color: #155724;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-status-text.qq-upload-status-error {
     background: #f8d7da;
     color: #721c24;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-delete,
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-cancel {
     padding: 8px 16px;
@@ -127,7 +110,6 @@
     transition: background 0.2s;
     margin-left: 15px;
 }
-
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-delete:hover,
 .slcorp-file-uploader.fineuploader-wrapper .qq-upload-cancel:hover {
     background: #c82333;
@@ -145,7 +127,6 @@
     align-items: center;
     justify-content: center;
 }
-
 .error-modal .error-modal-overlay {
     position: absolute;
     top: 0;
@@ -155,7 +136,6 @@
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
 }
-
 .error-modal .error-modal-content {
     position: relative;
     background: white;
@@ -165,7 +145,6 @@
     width: 90%;
     animation: modalSlideIn 0.3s ease-out;
 }
-
 @keyframes modalSlideIn {
     from {
         opacity: 0;
@@ -176,7 +155,6 @@
         transform: translateY(0) scale(1);
     }
 }
-
 .error-modal .error-modal-header {
     display: flex;
     justify-content: space-between;
@@ -185,14 +163,12 @@
     border-bottom: 1px solid #e9ecef;
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }
-
 .error-modal .error-modal-header h3 {
     margin: 0;
     color: white;
     font-size: 20px;
     font-weight: 600;
 }
-
 .error-modal .error-modal-close {
     background: none;
     border: none;
@@ -209,21 +185,17 @@
     border-radius: 50%;
     transition: background 0.2s;
 }
-
 .error-modal .error-modal-close:hover {
     background: rgba(255, 255, 255, 0.2);
 }
-
 .error-modal .error-modal-body {
     padding: 30px 24px;
     text-align: center;
 }
-
 .error-modal .error-icon {
     font-size: 64px;
     margin-bottom: 20px;
 }
-
 .error-modal .error-message {
     margin: 0;
     font-size: 16px;
@@ -231,14 +203,12 @@
     color: #333;
     word-wrap: break-word;
 }
-
 .error-modal .error-modal-footer {
     padding: 20px 24px;
     border-top: 1px solid #e9ecef;
     text-align: right;
     background: #f8f9fa;
 }
-
 .error-modal .error-modal-ok {
     padding: 10px 24px;
     background: #dc3545;
@@ -250,7 +220,6 @@
     cursor: pointer;
     transition: all 0.2s;
 }
-
 .error-modal .error-modal-ok:hover {
     background: #c82333;
     transform: translateY(-1px);

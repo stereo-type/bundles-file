@@ -3,22 +3,18 @@
 .slcorp-file-uploader.jquery-file-upload {
     font-family: Arial, sans-serif;
 }
-
 .slcorp-file-uploader.jquery-file-upload .fileupload-buttonbar {
     margin-bottom: 20px;
 }
-
 .slcorp-file-uploader.jquery-file-upload .fileupload-buttons {
     display: flex;
     gap: 10px;
 }
-
 .slcorp-file-uploader.jquery-file-upload .fileinput-button {
     position: relative;
     overflow: hidden;
     display: inline-block;
 }
-
 .slcorp-file-uploader.jquery-file-upload .fileinput-button input {
     position: absolute;
     top: 0;
@@ -30,7 +26,6 @@
     direction: ltr;
     cursor: pointer;
 }
-
 .slcorp-file-uploader.jquery-file-upload .fileinput-button span {
     display: inline-block;
     padding: 8px 16px;
@@ -39,15 +34,12 @@
     border-radius: 4px;
     cursor: pointer;
 }
-
 .slcorp-file-uploader.jquery-file-upload .fileinput-button:hover span {
     background: #0056b3;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files {
     margin-top: 20px;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .template-download,
 .slcorp-file-uploader.jquery-file-upload .files .template-upload {
     display: flex;
@@ -57,15 +49,12 @@
     border: 1px solid #ddd;
     border-radius: 4px;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .template-download {
     background: #f9f9f9;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .template-upload {
     background: #fff;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .preview {
     width: 80px;
     height: 80px;
@@ -77,23 +66,19 @@
     align-items: center;
     justify-content: center;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .preview img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .name {
     flex: 1;
     margin-right: 15px;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .size {
     margin-right: 15px;
     color: #666;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .delete {
     padding: 5px 10px;
     background: #dc3545;
@@ -102,11 +87,9 @@
     border-radius: 4px;
     cursor: pointer;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .delete:hover {
     background: #c82333;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .progress {
     width: 200px;
     height: 20px;
@@ -115,13 +98,11 @@
     border-radius: 10px;
     overflow: hidden;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .progress .progress-bar {
     height: 100%;
     background: #007bff;
     transition: width 0.3s;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .cancel {
     padding: 5px 10px;
     background: #6c757d;
@@ -130,7 +111,6 @@
     border-radius: 4px;
     cursor: pointer;
 }
-
 .slcorp-file-uploader.jquery-file-upload .files .cancel:hover {
     background: #5a6268;
 }
@@ -147,7 +127,6 @@
     align-items: center;
     justify-content: center;
 }
-
 .error-modal .error-modal-overlay {
     position: absolute;
     top: 0;
@@ -157,7 +136,6 @@
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
 }
-
 .error-modal .error-modal-content {
     position: relative;
     background: white;
@@ -169,7 +147,6 @@
     overflow: hidden;
     animation: modalSlideIn 0.3s ease-out;
 }
-
 @keyframes modalSlideIn {
     from {
         opacity: 0;
@@ -180,7 +157,6 @@
         transform: translateY(0) scale(1);
     }
 }
-
 .error-modal .error-modal-header {
     display: flex;
     justify-content: space-between;
@@ -189,14 +165,12 @@
     border-bottom: 1px solid #e9ecef;
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }
-
 .error-modal .error-modal-header h3 {
     margin: 0;
     color: white;
     font-size: 20px;
     font-weight: 600;
 }
-
 .error-modal .error-modal-close {
     background: none;
     border: none;
@@ -213,22 +187,18 @@
     border-radius: 50%;
     transition: background 0.2s;
 }
-
 .error-modal .error-modal-close:hover {
     background: rgba(255, 255, 255, 0.2);
 }
-
 .error-modal .error-modal-body {
     padding: 30px 24px;
     text-align: center;
 }
-
 .error-modal .error-icon {
     font-size: 64px;
     margin-bottom: 20px;
     animation: errorPulse 2s infinite;
 }
-
 @keyframes errorPulse {
     0%, 100% {
         transform: scale(1);
@@ -237,7 +207,6 @@
         transform: scale(1.1);
     }
 }
-
 .error-modal .error-message {
     margin: 0;
     font-size: 16px;
@@ -245,14 +214,12 @@
     color: #333;
     word-wrap: break-word;
 }
-
 .error-modal .error-modal-footer {
     padding: 20px 24px;
     border-top: 1px solid #e9ecef;
     text-align: right;
     background: #f8f9fa;
 }
-
 .error-modal .error-modal-ok {
     padding: 10px 24px;
     background: #dc3545;
@@ -265,13 +232,11 @@
     transition: all 0.2s;
     box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
 }
-
 .error-modal .error-modal-ok:hover {
     background: #c82333;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
 }
-
 .error-modal .error-modal-ok:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
