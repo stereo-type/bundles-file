@@ -1,227 +1,227 @@
 @charset "UTF-8";
 /* Стили для Plupload */
 .slcorp-file-uploader.plupload-wrapper {
-    font-family: Arial, sans-serif;
+  font-family: Arial, sans-serif;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload-buttons {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_button {
-    padding: 10px 20px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.2s;
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_button:hover {
-    background: #0056b3;
+  background: #0056b3;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_filelist {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file {
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    margin-bottom: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_content {
-    display: flex;
-    align-items: center;
-    flex: 1;
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_preview {
-    width: 80px;
-    height: 80px;
-    margin-right: 15px;
-    border-radius: 4px;
-    overflow: hidden;
-    background: #f0f0f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  margin-right: 15px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_preview img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_info {
-    flex: 1;
-    min-width: 0;
+  flex: 1;
+  min-width: 0;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_name {
-    font-weight: 500;
-    margin-bottom: 5px;
-    word-break: break-word;
+  font-weight: 500;
+  margin-bottom: 5px;
+  word-break: break-word;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_size {
-    color: #666;
-    font-size: 14px;
+  color: #666;
+  font-size: 14px;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_progress {
-    width: 100%;
-    height: 6px;
-    background: #f0f0f0;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 10px;
+  width: 100%;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 10px;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_progress .plupload_file_progress_bar {
-    height: 100%;
-    background: #007bff;
-    transition: width 0.3s;
-    border-radius: 3px;
+  height: 100%;
+  background: #007bff;
+  transition: width 0.3s;
+  border-radius: 3px;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_action {
-    padding: 8px 16px;
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.2s;
-    margin-left: 15px;
+  padding: 8px 16px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  margin-left: 15px;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_action:hover {
-    background: #c82333;
+  background: #c82333;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_status {
-    margin-left: 15px;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
+  margin-left: 15px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_status.uploading {
-    background: #fff3cd;
-    color: #856404;
+  background: #fff3cd;
+  color: #856404;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_status.success {
-    background: #d4edda;
-    color: #155724;
+  background: #d4edda;
+  color: #155724;
 }
 .slcorp-file-uploader.plupload-wrapper .plupload_file_status.error {
-    background: #f8d7da;
-    color: #721c24;
+  background: #f8d7da;
+  color: #721c24;
 }
 
 /* Стили для модального окна ошибок */
 .error-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .error-modal .error-modal-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(2px);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
 }
 .error-modal .error-modal-content {
-    position: relative;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    max-width: 500px;
-    width: 90%;
-    animation: modalSlideIn 0.3s ease-out;
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  animation: modalSlideIn 0.3s ease-out;
 }
 @keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-50px) scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .error-modal .error-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid #e9ecef;
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e9ecef;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }
 .error-modal .error-modal-header h3 {
-    margin: 0;
-    color: white;
-    font-size: 20px;
-    font-weight: 600;
+  margin: 0;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
 }
 .error-modal .error-modal-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 28px;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background 0.2s;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
 }
 .error-modal .error-modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 .error-modal .error-modal-body {
-    padding: 30px 24px;
-    text-align: center;
+  padding: 30px 24px;
+  text-align: center;
 }
 .error-modal .error-icon {
-    font-size: 64px;
-    margin-bottom: 20px;
+  font-size: 64px;
+  margin-bottom: 20px;
 }
 .error-modal .error-message {
-    margin: 0;
-    font-size: 16px;
-    line-height: 1.6;
-    color: #333;
-    word-wrap: break-word;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+  word-wrap: break-word;
 }
 .error-modal .error-modal-footer {
-    padding: 20px 24px;
-    border-top: 1px solid #e9ecef;
-    text-align: right;
-    background: #f8f9fa;
+  padding: 20px 24px;
+  border-top: 1px solid #e9ecef;
+  text-align: right;
+  background: #f8f9fa;
 }
 .error-modal .error-modal-ok {
-    padding: 10px 24px;
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+  padding: 10px 24px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 .error-modal .error-modal-ok:hover {
-    background: #c82333;
-    transform: translateY(-1px);
+  background: #c82333;
+  transform: translateY(-1px);
 }
