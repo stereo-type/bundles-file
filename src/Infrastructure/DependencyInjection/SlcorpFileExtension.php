@@ -175,7 +175,7 @@ class SlcorpFileExtension extends Extension implements PrependExtensionInterface
                 echo "  [SlcorpFileBundle] WARNING: npm is not installed.\n";
                 echo "  [SlcorpFileBundle] Please install npm and run: cd {$bundlePath} && npm run install-assets\n";
             }
-            if ($container->getParameter('kernel.debug')) {
+            if ($debug) {
                 trigger_error(
                     'npm is not installed. Please install npm and run: cd ' . $bundlePath . ' && npm run install-assets',
                     \E_USER_WARNING

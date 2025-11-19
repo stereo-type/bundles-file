@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Slcorp\FileBundle\Application\Command;
+namespace Slcorp\FileBundle\Application\Console;
 
 use Slcorp\FileBundle\Application\Service\FileService;
 use Symfony\Component\Console\Attribute\AsCommand;

@@ -237,11 +237,14 @@ readonly class FileService
         if (!$file instanceof File) {
             return false;
         }
+        if (!$id = $file->getId()) {
+            return false;
+        }
 
         $contenthash = $file->getContenthash();
 
         // Проверяем, есть ли другие записи с таким же contenthash
-        $otherFilesCount = $this->fileRepository->getCountSameFiles($contenthash, $file->getId());
+        $otherFilesCount = $this->fileRepository->getCountSameFiles($contenthash, $id);
 
         // Удаляем физический файл только если нет других записей с таким же contenthash
         if ($otherFilesCount === 0) {
@@ -277,9 +280,12 @@ readonly class FileService
         foreach ($draftFiles as $file) {
             $contenthash = $file->getContenthash();
 
+            if (!$id = $file->getId()) {
+                continue;
+            }
             // Проверяем, есть ли другие записи с таким же contenthash (включая другие draft файлы)
             // Используем ID текущего файла, чтобы не учитывать его при подсчете
-            $otherFilesCount = $this->fileRepository->getCountSameFiles($contenthash, $file->getId());
+            $otherFilesCount = $this->fileRepository->getCountSameFiles($contenthash, $id);
 
             // Удаляем физический файл только если нет других записей с таким же contenthash
             // и мы еще не проверяли этот contenthash

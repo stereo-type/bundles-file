@@ -315,7 +315,10 @@ class UniversalFileTransformer implements DataTransformerInterface
         ]);
 
         foreach ($existingDrafts as $existingDraft) {
-            $this->fileService->deleteFile($existingDraft->getId());
+            if (!$id = $existingDraft->getId()) {
+                continue;
+            }
+            $this->fileService->deleteFile($id);
         }
 
         // Генерируем новый draft itemid
