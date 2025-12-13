@@ -11,5 +11,5 @@ declare(strict_types=1);
  */
 
 return [
-    'Slcorp\\FileBundle\\UI\\Http\\Controller\\' => '%kernel.project_dir%/src/Bundles/FileBundle/src/UI/Http/Controller',
+    'Slcorp\\FileBundle\\UI\\Http\\Controller\\' => '%kernel.project_dir%/vendor/slcorp/file-bundle/src/UI/Http/Controller',
 ];
