@@ -10,7 +10,7 @@ return [
     'Slcorp\FileBundle' => [
         'type' => 'attribute',
         'is_bundle' => false,
-        'dir' => '%kernel.project_dir%/src/Bundles/FileBundle/src/Domain/Entity',
+        'dir' => '%kernel.project_dir%/vendor/slcorp/file-bundle/src/Domain/Entity',
         'prefix' => 'Slcorp\FileBundle\Domain\Entity',
         'alias' => 'Slcorp\FileBundle',
     ],
